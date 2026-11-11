@@ -34,8 +34,10 @@ namespace Sibir.Core
             var files = new List<string>();
             try
             {
-                foreach (var f in Directory.EnumerateFiles(LongPath.Ex(folder), "*", SearchOption.AllDirectories))
+                foreach (var fEx in Directory.EnumerateFiles(LongPath.Ex(folder), "*", SearchOption.AllDirectories))
                 {
+                    var f = fEx.Substring(4);                 // Restart Manager rejects \\?\ and over-MAX_PATH names
+                    if (f.Length >= 260) continue;
                     files.Add(f);
                     if (files.Count >= 2000) break;
                 }

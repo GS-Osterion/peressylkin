@@ -58,6 +58,24 @@ namespace Sibir.Core
             return sum;
         }
 
+        /// <summary>Deletes a tree; reparse points inside (and at the top) are removed as links, never followed.</summary>
+        public static void DeleteTree(string dir)
+        {
+            var ex = LongPath.Ex(dir);
+            var info = new DirectoryInfo(ex);
+            if (!info.Exists) return;
+            if ((info.Attributes & FileAttributes.ReparsePoint) != 0) { Junction.Delete(dir); return; }
+            foreach (var i in info.GetFileSystemInfos())
+            {
+                if (i is DirectoryInfo d) DeleteTree(d.FullName);
+                else { i.Attributes = FileAttributes.Normal; i.Delete(); }
+            }
+            info.Attributes = FileAttributes.Directory;
+            Directory.Delete(ex, false);
+        }
+
+        public static bool DirExists(string dir) => Directory.Exists(LongPath.Ex(dir));
+
         public static bool IsEmptyDir(string dir) =>
             !Directory.Exists(LongPath.Ex(dir)) || !Directory.EnumerateFileSystemEntries(LongPath.Ex(dir)).Any();
     }
