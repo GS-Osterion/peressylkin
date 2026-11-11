@@ -15,7 +15,7 @@ namespace Sibir.Gui
     {
         internal sealed class Job
         {
-            public string Path; public Func<IProgress<CopyProgress>, CancellationToken, MoveResult> Run;
+            public string Path; public string Verb = "--menu-exile"; public Func<IProgress<CopyProgress>, CancellationToken, MoveResult> Run;
             public Job(string path, Func<IProgress<CopyProgress>, CancellationToken, MoveResult> run) { Path = path; Run = run; }
         }
 
@@ -56,7 +56,7 @@ namespace Sibir.Gui
                 var r = _cts.IsCancellationRequested
                     ? new MoveResult { Source = job.Path, Reason = "cancelled", Message = "Этап отменён" }
                     : await Task.Run(() => job.Run(progress, _cts.Token));
-                if (r.Reason == "needs_admin" && AskElevation(job.Path)) { r.Message = "Передано на исполнение с санкцией прокурора"; }
+                if (r.Reason == "needs_admin" && AskElevation(job.Verb, job.Path)) { r.Message = "Передано на исполнение с санкцией прокурора"; }
                 results.Add(r);
                 if (r.Ok) { ok++; freed += r.Bytes; }
                 _log.AppendText((r.Ok ? "[+] " : "[x] ") + job.Path + Environment.NewLine + "    " + r.Message +
@@ -68,10 +68,10 @@ namespace Sibir.Gui
             _button.Text = "Разойтись"; _button.Enabled = true;
         }
 
-        private static bool AskElevation(string path)
+        private static bool AskElevation(string verb, string path)
         {
             if (MessageBox.Show(Strings.NeedsAdmin + ".\n\nЗапросить права администратора для:\n" + path, Strings.AppName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return false;
-            return Elevation.Relaunch(new[] { "--menu-exile", path });
+            return Elevation.Relaunch(new[] { verb, path });
         }
     }
 }

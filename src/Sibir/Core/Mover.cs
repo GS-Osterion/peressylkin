@@ -62,8 +62,8 @@ namespace Sibir.Core
             var res = new MoveResult { Source = src, Target = tgt };
 
             At(Step.Resist, src);
-            if (!LockFinder.CanRename(src))
-                return Fail(res, "locked", null, LockFinder.WhoHolds(src));
+            var resist = Resistance(src, res);
+            if (resist != null) return resist;
             if (Fs.DirExists(staging) || Fs.DirExists(old) || !Fs.IsEmptyDir(tgt))
                 return Fail(res, "target_exists", Strings.TargetExists);
 
@@ -124,13 +124,22 @@ namespace Sibir.Core
 
         private sealed class LockedException : Exception { public LockedException(string m) : base(m) { } }
 
+        /// <summary>Null if the folder can be moved; otherwise "locked" (a process holds it) or "needs_admin" (no rights).</summary>
+        private static MoveResult Resistance(string folder, MoveResult res)
+        {
+            if (LockFinder.CanRename(folder)) return null;
+            var holders = LockFinder.WhoHolds(folder);
+            if (holders.Length == 0 && !LockFinder.CanWriteNextTo(folder)) return Fail(res, "needs_admin", Strings.NeedsAdmin);
+            return Fail(res, "locked", null, holders);
+        }
+
         private static (string, string) Classify(Exception e)
         {
             switch (e)
             {
                 case VerifyException v: return ("verify_failed", Strings.VerifyFailed + ": " + v.Message);
                 case LockedException _: return ("locked", string.Format(Strings.Locked, "другой процесс"));
-                case UnauthorizedAccessException u when u.Message == "needs_admin": return ("needs_admin", Strings.NeedsAdmin);
+                case UnauthorizedAccessException _: return ("needs_admin", Strings.NeedsAdmin);
                 case OperationCanceledException _: return ("cancelled", "Этап отменён");
                 default: return ("copy_failed", Strings.CopyFailed + ": " + e.Message);
             }
@@ -176,7 +185,8 @@ namespace Sibir.Core
             catch (ArgumentException) { }
 
             At(Step.Resist, src);
-            if (!LockFinder.CanRename(tgt)) return Fail(res, "locked", null, LockFinder.WhoHolds(tgt));
+            var resist = Resistance(tgt, res) ?? (LockFinder.CanWriteNextTo(src) ? null : Fail(res, "needs_admin", Strings.NeedsAdmin));
+            if (resist != null) return resist;
 
             var r2 = rec.With("rehabilitating"); r2.Operation = "rehab";
             _archive.Write(r2);

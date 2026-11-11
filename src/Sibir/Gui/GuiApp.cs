@@ -60,7 +60,7 @@ namespace Sibir.Gui
             if (known.Count == 0) return;
             if (MessageBox.Show("Вернуть по месту прописки?\n\n" + string.Join("\n", known), Strings.MenuRehab, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
             var mover = NewMover();
-            Application.Run(new ProgressForm(known.Select(p => new ProgressForm.Job(p, (pr, ct) => mover.Rehab(p, pr, ct))).ToList()));
+            Application.Run(new ProgressForm(known.Select(p => new ProgressForm.Job(p, (pr, ct) => mover.Rehab(p, pr, ct)) { Verb = "--menu-rehab" }).ToList()));
         }
 
         private static void ShowCase(string path)

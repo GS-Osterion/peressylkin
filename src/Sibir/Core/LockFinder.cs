@@ -29,6 +29,20 @@ namespace Sibir.Core
             }
         }
 
+        /// <summary>
+        /// Can the user create (and remove) an entry next to this folder? Renaming needs that right on the parent;
+        /// without it (Program Files, ProgramData\…, other users' folders) the answer is "needs admin", not "locked".
+        /// </summary>
+        public static bool CanWriteNextTo(string folder)
+        {
+            var parent = Path.GetDirectoryName(LongPath.Normalize(folder));
+            if (parent == null) return false;
+            var probe = LongPath.Ex(Path.Combine(parent, ".~sibir-probe-" + Guid.NewGuid().ToString("N").Substring(0, 8)));
+            try { Directory.CreateDirectory(probe); Directory.Delete(probe); return true; }
+            catch (UnauthorizedAccessException) { return false; }
+            catch (IOException) { return false; }
+        }
+
         public static string[] WhoHolds(string folder)
         {
             var files = new List<string>();
