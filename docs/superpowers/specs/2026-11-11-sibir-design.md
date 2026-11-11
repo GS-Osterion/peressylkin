@@ -52,9 +52,11 @@
 
 ## 3. Устройство
 
-- Один файл `Sibir.exe`, C#, WinForms, .NET Framework 4.8. Сборка — системным
-  `csc.exe` (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`) через
-  `build.ps1`. Подсистема — Windows (GUI); консольный режим подключается к
+- Один файл `Sibir.exe`, C#, WinForms, целевая платформа .NET Framework 4.8
+  (есть в любой Windows 10/11 — пользователю ничего ставить не нужно). Сборка —
+  .NET SDK (`dotnet build`, `TargetFramework=net48`, `LangVersion=latest`) через
+  `build.ps1`; системный `csc.exe` не годится — он поддерживает только C# 5.
+  Тесты — xUnit на net48 (`dotnet test`). Подсистема — Windows (GUI); консольный режим подключается к
   консоли родителя (`AttachConsole(ATTACH_PARENT_PROCESS)`) или пишет в
   перенаправленные дескрипторы.
 - Режим определяется аргументами: нет аргументов → окно «Сибирь»
@@ -96,7 +98,9 @@
 Шаг 0 — проверки (ничего не меняют), каждая с кодом причины:
 `already_exiled` (источник — reparse point), `protected` (Windows, корень
 Program Files, корень профиля, WindowsApps, XboxGames, корни дисков),
-`same_drive`, `no_space` (размер + 5% запаса), `removable_target` (только
+`same_drive` (сравниваются тома, а не буквы: `subst` и точки монтирования
+учитываются), `network_target` (junction не может вести на сетевой путь — отказ),
+`no_space` (размер + 5% запаса), `removable_target` (только
 предупреждение), `launcher` (см. ниже), `nested` (выбраны папка и её подпапка —
 берётся верхняя), `target_exists` (непустая папка назначения).
 
@@ -140,7 +144,8 @@ Restart Manager найти процессы → `locked` с их именами.
 Несколько папок обрабатываются последовательно и независимо; в конце сводка.
 
 Штамп: в папку назначения пишется скрытый системный `desktop.ini` с
-`IconResource=<путь к Sibir.exe>,1`; на junction ставится атрибут System.
+`IconResource=%LOCALAPPDATA%\Sibir\stamp.ico,0` (иконка кладётся рядом с
+программой при «Встать на учёт»); на junction ставится атрибут System.
 Галочка «Ставить штамп» (по умолчанию вкл.). При реабилитации `desktop.ini`
 удаляется, если его создала программа (метка в архиве).
 
