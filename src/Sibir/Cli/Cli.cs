@@ -38,7 +38,7 @@ namespace Sibir.Cli
     /// <summary>Non-interactive command mode for agents and scripts (spec §6).</summary>
     internal static class Cli
     {
-        private static readonly string[] Commands = { "check", "exile", "rehab", "status", "list", "recover", "schema", "selftest", "help", "--help" };
+        private static readonly string[] Commands = { "check", "exile", "rehab", "status", "list", "recover", "schema", "selftest", "install", "uninstall", "help", "--help" };
         private static readonly HashSet<string> Flags = new HashSet<string> { "--json", "--yes", "--strict", "--ignore-launcher", "--by-name", "--no-stamp", "--allow-capital" };
 
         public static readonly string[] Reasons =
@@ -91,6 +91,18 @@ namespace Sibir.Cli
                     case "check": case "exile": return Exile(a, ctx, w, stderr, a.Command == "exile" && a.Has("--yes"));
                     case "rehab": return Rehab(a, ctx, w, stderr);
                     case "selftest": return SelfTest.Run(a.To, a.Has("--json"), stdout);
+                    case "install":
+                        using (var k = Shell.ShellIntegration.UserClasses())
+                        {
+                            var exe = Shell.ShellIntegration.InstallFiles(System.Reflection.Assembly.GetEntryAssembly().Location);
+                            Shell.ShellIntegration.Install(k, exe);
+                            w.Result(exe, "done", "ok", "Встал на учёт");
+                        }
+                        return 0;
+                    case "uninstall":
+                        using (var k = Shell.ShellIntegration.UserClasses()) Shell.ShellIntegration.Uninstall(k);
+                        w.Result(Shell.ShellIntegration.InstalledExe, "done", "ok", "Снят с учёта (архив сохранён)");
+                        return 0;
                 }
             }
             catch (Exception e)
@@ -277,6 +289,8 @@ namespace Sibir.Cli
                 ["recover"] = "recover [--yes] — finish or roll back interrupted operations",
                 ["schema"] = "schema — this description",
                 ["selftest"] = "selftest [--to <root on another drive>] — built-in test range",
+                ["install"] = "install — copy to %LOCALAPPDATA%\\Sibir and add Explorer menu items (HKCU, no admin)",
+                ["uninstall"] = "uninstall — remove Explorer menu items (archive kept)",
             },
             ["flags"] = Flags.ToArray(),
             ["result_fields"] = new[] { "path", "verdict (ok|warn|refused|done|failed|unfinished|exiled)", "reason", "message (human, Russian)", "target", "bytes", "processes" },
