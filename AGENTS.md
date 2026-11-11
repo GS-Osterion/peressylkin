@@ -37,6 +37,6 @@ human the command from `message` · 6 unfinished cases — run `recover --yes` f
 
 ## Notes
 
-- PowerShell and Git Bash both wait for the exe and get the exit code; `| Out-String` is not required.
+- It is a GUI-subsystem exe. In PowerShell ALWAYS pipe: `& Sibir.exe ... | Out-String` — without a pipe PowerShell does not wait, and output and `$LASTEXITCODE` are lost. Git Bash waits normally.
 - Data is never deleted: the original is removed only after the copy is verified and the junction works.
 - Install the Claude Code skill: copy `docs/claude-skill/SKILL.md` to `~/.claude/skills/sibir/SKILL.md`.

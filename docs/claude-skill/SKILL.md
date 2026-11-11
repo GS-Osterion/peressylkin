@@ -5,7 +5,7 @@ description: Free space on a drive by moving folders to another drive while keep
 
 # Sibir — move a folder, keep its path
 
-Tool: `Sibir.exe` (installed copy: `%LOCALAPPDATA%\Sibir\Sibir.exe`; source: `K:\Project Sibir`). Full reference: `AGENTS.md` in the repo, or `Sibir.exe schema`.
+Tool: `Sibir.exe` (installed copy: `%LOCALAPPDATA%\Sibir\Sibir.exe`; source: `K:\Project Sibir`). In PowerShell always append `| Out-String` (GUI exe: otherwise no wait, no output, no exit code). Full reference: `AGENTS.md` in the repo, or `Sibir.exe schema`.
 
 1. `Sibir.exe check "<folder>" [...] --json` — always first; read each row's `verdict` and `reason`.
 2. Show the user what will move (size, target). Never add `--ignore-launcher` (Steam/Epic/GOG can move games themselves) or `--allow-capital` without explicit consent.
