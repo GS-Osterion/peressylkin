@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Sibir</AssemblyName>
+    <RootNamespace>Sibir</RootNamespace>
+    <ApplicationIcon Condition="Exists('..\..\assets\sibir.ico')">..\..\assets\sibir.ico</ApplicationIcon>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Windows.Forms" />
+    <InternalsVisibleTo Include="Sibir.Tests" />
+  </ItemGroup>
+</Project>
