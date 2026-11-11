@@ -18,7 +18,7 @@ namespace Sibir.Tests
 
         public void Dispose()
         {
-            try { DeleteTree(Path); } catch { /* best effort */ }
+            try { DeleteTree(@"\\?\" + Path); } catch { /* best effort */ }
         }
 
         public static void DeleteTree(string dir)
