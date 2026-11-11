@@ -4,3 +4,4 @@ out/
 .superpowers/
 *.user
 .vs/
+dist/
