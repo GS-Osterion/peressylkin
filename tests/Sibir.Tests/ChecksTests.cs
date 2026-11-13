@@ -97,6 +97,14 @@ namespace Sibir.Tests
             Is(One(src, o: new CheckOptions { ArchiveDir = ArchiveDir.ToUpperInvariant() }), Verdict.Refused, "peressylkin_property");
         }
 
+        [Fact] public void Property_ContainsExiledFolders_OldRootWithoutPlaque()
+        {
+            var tgt = Src(@"d\Сибирь\C\x");
+            _archive.Write(new ArchiveRecord { Id = "1", Source = @"C:\x", Target = tgt, Status = "exiled" });
+            Is(One(_t.Sub(@"d\Сибирь")), Verdict.Refused, "peressylkin_property");
+            Is(One(_t.Sub(@"d\Сибирь\C")), Verdict.Refused, "peressylkin_property");
+        }
+
         [Fact] public void InSiberia_TargetOfExiledRecord_AndInsideRoot()
         {
             var tgt = Src(@"t\Сибирь\C\x");

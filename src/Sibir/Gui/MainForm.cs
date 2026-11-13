@@ -53,7 +53,7 @@ namespace Sibir.Gui
         {
             using (var k = ShellIntegration.UserClasses())
             {
-                var installed = ShellIntegration.IsInstalled(k);
+                var installed = ShellIntegration.IsInstalledAt(k, ShellIntegration.InstalledExe);
                 _register.Text = installed ? "Сняться с учёта" : "Встать на учёт";
                 _startMenu.Enabled = _desktop.Enabled = !installed;
             }
@@ -72,7 +72,7 @@ namespace Sibir.Gui
         {
             using (var k = ShellIntegration.UserClasses())
             {
-                if (ShellIntegration.IsInstalled(k))
+                if (ShellIntegration.IsInstalledAt(k, ShellIntegration.InstalledExe))
                 {
                     ShellIntegration.Uninstall(k);
                     ShellIntegration.RemoveAllShortcuts();

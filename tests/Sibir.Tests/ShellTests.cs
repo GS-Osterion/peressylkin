@@ -62,6 +62,20 @@ namespace Sibir.Tests
             }
         }
 
+        [Fact] public void IsInstalledAt_OldExeRegistered_IsNotCurrent()
+        {
+            try
+            {
+                using (var root = Registry.CurrentUser.CreateSubKey(TestKey))
+                {
+                    ShellIntegration.Install(root, @"C:\Апп\Sibir.exe");
+                    Assert.False(ShellIntegration.IsInstalledAt(root, @"C:\Апп\Peressylkin.exe"), "1.0.0 menu is not the current install");
+                    Assert.True(ShellIntegration.IsInstalledAt(root, @"C:\Апп\Sibir.exe"), "same exe is current");
+                }
+            }
+            finally { Registry.CurrentUser.DeleteSubKeyTree(@"Software\SibirTests", false); }
+        }
+
         [Fact] public void ShortcutName_ByUiLanguage()
         {
             Assert.Equal("Перессылкин", ShellIntegration.ShortcutName(System.Globalization.CultureInfo.GetCultureInfo("ru-RU")));

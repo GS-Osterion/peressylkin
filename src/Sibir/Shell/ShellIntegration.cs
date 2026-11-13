@@ -46,6 +46,16 @@ namespace Sibir.Shell
             using (var k = classesRoot.OpenSubKey(@"Directory\shell\SibirExile")) return k != null;
         }
 
+        /// <summary>Menu is registered AND points to this exe (a 1.0.0 menu pointing to Sibir.exe is not current).</summary>
+        public static bool IsInstalledAt(RegistryKey classesRoot, string exePath)
+        {
+            using (var k = classesRoot.OpenSubKey(@"Directory\shell\SibirExile\command"))
+            {
+                var cmd = k?.GetValue(null) as string;
+                return cmd != null && cmd.StartsWith("\"" + exePath + "\"", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
         private static readonly string[] ShortcutNames = { "Перессылкин", "Peressylkin" };
 
         /// <summary>"Перессылкин" for a Russian Windows UI, "Peressylkin" otherwise.</summary>

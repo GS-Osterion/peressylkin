@@ -88,6 +88,7 @@ namespace Sibir.Core
                 if (UnderReparsePoint(src)) { Refuse("already_exiled", Strings.AlreadyExiled); continue; }
                 if (exiled.Any(e => LongPath.Same(e.Source, src))) { Refuse("case_open", Strings.CaseOpen); continue; }
                 if (exiled.Any(e => LongPath.SameOrUnder(src, e.Target)) || LongPath.SameOrUnder(src, rootN)) { Refuse("in_siberia", Strings.InSiberia); continue; }
+                if (exiled.Any(e => LongPath.SameOrUnder(e.Target, src))) { Refuse("peressylkin_property", Strings.Property); continue; }   // a Siberia (even 1.0.0, no plaque) holding exiled folders
                 if (LongPath.SameOrUnder(rootN, src)) { Refuse("target_is_source", Strings.TargetIsSource); continue; }
                 if (env.IsNetworkPath(rootN)) { Refuse("network_target", Strings.NetworkTarget); continue; }
                 if (string.Equals(env.VolumeIdOf(src), rootVol, StringComparison.OrdinalIgnoreCase)) { Refuse("same_drive", Strings.SameDrive); continue; }
