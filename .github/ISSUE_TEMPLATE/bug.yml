@@ -1,35 +1,42 @@
-name: Ошибка
-description: Что-то пошло не так при ссылке, реабилитации или в окнах программы
+name: Bug report
+description: Something went wrong while moving a folder, moving it back, or in the program's windows
 labels: [bug]
 body:
+  - type: markdown
+    attributes:
+      value: Issues in English or Russian are both welcome.
   - type: textarea
     id: what
     attributes:
-      label: Что произошло
-      description: Что делали, что ожидали, что получили. Текст сообщения программы — дословно.
+      label: What happened
+      description: What you did, what you expected, what you got. Copy the program's message verbatim.
     validations:
       required: true
   - type: input
     id: folder
     attributes:
-      label: Какая папка
-      description: Путь и чья это папка (игра, программа). Личные части пути можно заменить на ***.
+      label: Folder
+      description: The path and whose folder it is (a game, a program). Feel free to replace personal parts of the path with ***.
   - type: textarea
     id: status
     attributes:
-      label: Вывод status
-      description: "Выполните `Sibir.exe status <папка> --json` (в PowerShell: `& Sibir.exe status <папка> --json | Out-String`) и вставьте результат."
+      label: Status output
+      description: "Run `Sibir.exe status <folder> --json` (in PowerShell: `& Sibir.exe status <folder> --json | Out-String`) and paste the result."
       render: json
   - type: input
     id: version
     attributes:
-      label: Версия Sibir и Windows
+      label: Program and Windows version
       placeholder: "Sibir 1.0.0, Windows 11 24H2"
     validations:
       required: true
-  - type: checkboxes
-    id: safe
+  - type: dropdown
+    id: data
     attributes:
-      label: Данные
+      label: Is your data intact?
+      description: Is everything still there, either in the original folder or in the destination?
       options:
-        - label: Все данные на месте (в исходной папке или в «Сибири»)
+        - "Yes"
+        - "No / not sure"
+    validations:
+      required: true
