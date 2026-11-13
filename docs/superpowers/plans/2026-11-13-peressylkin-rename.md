@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Hidden names unchanged: `%LOCALAPPDATA%\Sibir`, registry keys `SibirExile/SibirRehab/SibirCase`, namespace `Sibir`, projects `src/Sibir`, `tests/Sibir.Tests`, destination folder `Сибирь`, all existing `reason` codes.
-- Visible name: `Peressylkin` (Latin), «Пересылкин» (Russian). `Strings.AppName` stays «Ссылка в Сибирь».
+- Visible name: `Peressylkin` (Latin), «Перессылкин» (Russian). `Strings.AppName` stays «Ссылка в Сибирь».
 - No bypass flag for `peressylkin_property` in this release (Большой Террор is a later task).
 - Version `1.1.0`.
 - Spec correction: «Сняться с учёта» keeps today's behaviour (removes menu items only, files and archive stay); the legacy `Sibir.exe` is removed on install, not uninstall.
@@ -38,17 +38,17 @@
 **Interfaces:**
 - Produces:
   - `static class Plaque` in `Sibir.Core`:
-    - `const string ArchiveFile = "АРХИВ ТОВ. ПЕРЕСЫЛКИНА — НЕ ТРОГАТЬ.txt"`
-    - `const string SiberiaFile = "СИБИРЬ ТОВ. ПЕРЕСЫЛКИНА — НЕ ТРОГАТЬ.txt"`
+    - `const string ArchiveFile = "АРХИВ ТОВ. ПЕРЕССЫЛКИНА — НЕ ТРОГАТЬ.txt"`
+    - `const string SiberiaFile = "СИБИРЬ ТОВ. ПЕРЕССЫЛКИНА — НЕ ТРОГАТЬ.txt"`
     - `static string DefaultArchiveDir` = `%LOCALAPPDATA%\Sibir`
     - `static bool IsMarked(string dir)` — true if either file exists directly in `dir` (no subtree walk)
     - `static void EnsureArchive(string dir)`, `static void EnsureSiberia(string root)` — create dir if missing, write plaque (UTF-8 with BOM) only if absent; swallow IO/UnauthorizedAccess exceptions.
   - `CheckOptions.ArchiveDir` (string, default `Plaque.DefaultArchiveDir`)
-  - `Strings.Property = "Имущество тов. Пересылкина. Ссылке не подлежит"`
+  - `Strings.Property = "Имущество тов. Перессылкина. Ссылке не подлежит"`
 
 Plaque texts (exact copy, Russian, plain text):
-- Archive: «Здесь архив дел тов. Пересылкина (программа «Ссылка в Сибирь», github.com/GS-Osterion/peressylkin). По нему реабилитируют сосланные папки: без него их не вернуть. Имя папки «Sibir» — историческое. Не удалять, не переносить, не ссылать.»
-- Siberia: «Здесь отбывают ссылку папки, сосланные тов. Пересылкиным (программа «Ссылка в Сибирь», github.com/GS-Osterion/peressylkin). На них ведут ссылки со старых мест. Вручную не удалять и не переименовывать — вернуть через «Реабилитировать».»
+- Archive: «Здесь архив дел тов. Перессылкина (программа «Ссылка в Сибирь», github.com/GS-Osterion/peressylkin). По нему реабилитируют сосланные папки: без него их не вернуть. Имя папки «Sibir» — историческое. Не удалять, не переносить, не ссылать.»
+- Siberia: «Здесь отбывают ссылку папки, сосланные тов. Перессылкиным (программа «Ссылка в Сибирь», github.com/GS-Osterion/peressylkin). На них ведут ссылки со старых мест. Вручную не удалять и не переименовывать — вернуть через «Реабилитировать».»
 
 - [ ] **Step 1: Write failing tests** in `ChecksTests` (archive dir = `_t.Sub(@"c\Users\u\AppData\Local\Sibir")`, passed via `new CheckOptions { ArchiveDir = ... }`):
   - `Property_ArchiveItself` → `Is(..., Verdict.Refused, "peressylkin_property")`
@@ -82,7 +82,7 @@ Plaque texts (exact copy, Russian, plain text):
 ### Task 3: Exe becomes Peressylkin.exe
 
 **Files:**
-- Modify: `src/Sibir/Sibir.csproj` (`AssemblyName` → `Peressylkin`, `Version` → `1.1.0`, `Product` → `Пересылкин — Ссылка в Сибирь`), `src/Sibir/Shell/ShellIntegration.cs:18,49-61`, `src/Sibir/Cli/Cli.cs:281,292,304` (tool line, install help, help header → `Peressylkin.exe — Ссылка в Сибирь`; all `Sibir.exe` in help → `Peressylkin.exe`), `build.ps1:16,18`, any test that references the built exe name.
+- Modify: `src/Sibir/Sibir.csproj` (`AssemblyName` → `Peressylkin`, `Version` → `1.1.0`, `Product` → `Перессылкин — Ссылка в Сибирь`), `src/Sibir/Shell/ShellIntegration.cs:18,49-61`, `src/Sibir/Cli/Cli.cs:281,292,304` (tool line, install help, help header → `Peressylkin.exe — Ссылка в Сибирь`; all `Sibir.exe` in help → `Peressylkin.exe`), `build.ps1:16,18`, any test that references the built exe name.
 - Test: `tests/Sibir.Tests/ShellTests.cs`
 
 **Interfaces:**
