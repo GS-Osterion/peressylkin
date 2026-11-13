@@ -94,16 +94,17 @@ Plaque texts (exact copy, Russian, plain text):
 - [ ] **Step 4:** `./build.ps1` → pass, prints `OK: out\Peressylkin.exe`.
 - [ ] **Step 5:** Commit `feat: exe renamed to Peressylkin.exe, legacy Sibir.exe cleaned on install`.
 
-### Task 3b: Start menu shortcut
+### Task 3b: Start menu and desktop shortcuts
 
 **Files:**
 - Modify: `src/Sibir/Shell/ShellIntegration.cs`, install/uninstall call sites in `src/Sibir/Cli/Cli.cs` (~94-105) and `src/Sibir/Gui/MainForm.cs` (`ToggleRegistration`)
 - Test: `tests/Sibir.Tests/ShellTests.cs`
 
 **Interfaces:**
-- Produces: `static string ShortcutName(CultureInfo ui)` → `"Перессылкин"` if `ui.TwoLetterISOLanguageName == "ru"`, else `"Peressylkin"`; `static void CreateShortcut(string programsDir, string exePath, CultureInfo ui)`; `static void RemoveShortcuts(string programsDir)` (deletes both `Перессылкин.lnk` and `Peressylkin.lnk`, ignores missing). Callers pass `Environment.GetFolderPath(SpecialFolder.Programs)` and `CultureInfo.CurrentUICulture`.
+- Produces: `static string ShortcutName(CultureInfo ui)` → `"Перессылкин"` if `ui.TwoLetterISOLanguageName == "ru"`, else `"Peressylkin"`; `static void CreateShortcut(string dir, string exePath, CultureInfo ui)`; `static void RemoveShortcuts(string dir, string exePath)` (deletes `Перессылкин.lnk` / `Peressylkin.lnk` in `dir` only if their target equals `exePath`, case-insensitive; ignores missing). Callers pass `SpecialFolder.Programs` and `SpecialFolder.DesktopDirectory`, `CultureInfo.CurrentUICulture`.
+- GUI: two checkboxes next to the register button in `MainForm` — «Ярлык в меню Пуск» (checked), «Ярлык на рабочем столе» (unchecked); disabled while registered. CLI: `install [--desktop] [--no-start-menu]`; add both flags to help/schema. Uninstall (GUI and CLI) always calls `RemoveShortcuts` for both dirs.
 
-- [ ] **Step 1: Failing tests** `ShortcutName_ByUiLanguage` (`ru-RU` → «Перессылкин», `en-US` and `de-DE` → «Peressylkin»); `Shortcut_CreateThenRemove` in a temp dir: `.lnk` exists after create, and after switching culture + create + `RemoveShortcuts` no `.lnk` remains.
+- [ ] **Step 1: Failing tests** `ShortcutName_ByUiLanguage` (`ru-RU` → «Перессылкин», `en-US` and `de-DE` → «Peressylkin»); `Shortcut_CreateThenRemove` in a temp dir: `.lnk` exists after create, and after switching culture + create + `RemoveShortcuts` no `.lnk` remains; `RemoveShortcuts_KeepsForeignTarget` (a `Peressylkin.lnk` pointing to another exe survives); `CliInstall_ParsesShortcutFlags` (`--desktop`, `--no-start-menu` accepted, unknown flag still rejected).
 - [ ] **Step 2:** `./build.ps1 -Filter Shortcut` → FAIL.
 - [ ] **Step 3:** Implement via `WScript.Shell` COM (`Type.GetTypeFromProgID("WScript.Shell")`, `dynamic`): `TargetPath` = exe, `IconLocation` = `exe,0`, `WorkingDirectory` = exe dir. Install creates, uninstall removes; failures to create a shortcut do not fail install.
 - [ ] **Step 4:** `./build.ps1` → pass.
