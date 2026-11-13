@@ -61,6 +61,12 @@ namespace Sibir.Tests
             Assert.True(File.Exists(Path.Combine(_t.Sub("arch"), Plaque.ArchiveFile)), "archive plaque next to archive.jsonl");
         }
 
+        [Fact] public void CliInstall_ParsesShortcutFlags()
+        {
+            Assert.Equal(0, Run("check", Src(@"c\A"), "--to", _root, "--desktop", "--no-start-menu", "--json").code);
+            Assert.Equal(1, Run("check", Src(@"c\A"), "--to", _root, "--bogus", "--json").code);
+        }
+
         [Fact] public void Check_PlacesNothing()
         {
             Run("check", Src(@"c\A"), "--to", _root, "--json");

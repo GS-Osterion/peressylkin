@@ -46,6 +46,68 @@ namespace Sibir.Shell
             using (var k = classesRoot.OpenSubKey(@"Directory\shell\SibirExile")) return k != null;
         }
 
+        private static readonly string[] ShortcutNames = { "Перессылкин", "Peressylkin" };
+
+        /// <summary>"Перессылкин" for a Russian Windows UI, "Peressylkin" otherwise.</summary>
+        public static string ShortcutName(System.Globalization.CultureInfo ui) =>
+            ui.TwoLetterISOLanguageName == "ru" ? ShortcutNames[0] : ShortcutNames[1];
+
+        /// <summary>Creates &lt;dir&gt;\&lt;ShortcutName&gt;.lnk pointing to the exe. Returns false on failure.</summary>
+        public static bool CreateShortcut(string dir, string exePath, System.Globalization.CultureInfo ui)
+        {
+            try
+            {
+                Directory.CreateDirectory(dir);
+                var lnk = Call(WshShell(), "CreateShortcut", Path.Combine(dir, ShortcutName(ui) + ".lnk"));
+                Set(lnk, "TargetPath", exePath);
+                Set(lnk, "WorkingDirectory", Path.GetDirectoryName(exePath));
+                Set(lnk, "IconLocation", exePath + ",0");
+                Call(lnk, "Save");
+                return true;
+            }
+            catch (Exception) { return false; }
+        }
+
+        /// <summary>Deletes our shortcuts (either name) in dir whose target is exePath; foreign ones stay.</summary>
+        public static void RemoveShortcuts(string dir, string exePath)
+        {
+            foreach (var name in ShortcutNames)
+            {
+                var path = Path.Combine(dir, name + ".lnk");
+                if (!File.Exists(path)) continue;
+                try
+                {
+                    var target = (string)Get(Call(WshShell(), "CreateShortcut", path), "TargetPath");
+                    if (string.Equals(Path.GetFullPath(target), Path.GetFullPath(exePath), StringComparison.OrdinalIgnoreCase))
+                        File.Delete(path);
+                }
+                catch (Exception) { }
+            }
+        }
+
+        private static string Programs => Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+        private static string Desktop => Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+
+        /// <summary>Install-time shortcuts with the current UI language; failures never fail install.</summary>
+        public static void CreateShortcuts(string exePath, bool startMenu, bool desktop)
+        {
+            var ui = System.Globalization.CultureInfo.CurrentUICulture;
+            if (startMenu) CreateShortcut(Programs, exePath, ui);
+            if (desktop) CreateShortcut(Desktop, exePath, ui);
+        }
+
+        /// <summary>Uninstall: our shortcuts in the Start menu and on the desktop.</summary>
+        public static void RemoveAllShortcuts()
+        {
+            RemoveShortcuts(Programs, InstalledExe);
+            RemoveShortcuts(Desktop, InstalledExe);
+        }
+
+        private static object WshShell() => Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
+        private static object Call(object o, string m, params object[] a) => o.GetType().InvokeMember(m, System.Reflection.BindingFlags.InvokeMethod, null, o, a);
+        private static object Get(object o, string p) => o.GetType().InvokeMember(p, System.Reflection.BindingFlags.GetProperty, null, o, null);
+        private static void Set(object o, string p, object v) => o.GetType().InvokeMember(p, System.Reflection.BindingFlags.SetProperty, null, o, new[] { v });
+
         /// <summary>Exe name of version 1.0.0; removed on install.</summary>
         public const string LegacyExe = "Sibir.exe";
 

@@ -41,7 +41,7 @@ namespace Sibir.Cli
     internal static class Cli
     {
         private static readonly string[] Commands = { "check", "exile", "rehab", "status", "list", "recover", "schema", "selftest", "install", "uninstall", "help", "--help" };
-        private static readonly HashSet<string> Flags = new HashSet<string> { "--json", "--yes", "--strict", "--ignore-launcher", "--by-name", "--no-stamp", "--allow-capital" };
+        private static readonly HashSet<string> Flags = new HashSet<string> { "--json", "--yes", "--strict", "--ignore-launcher", "--by-name", "--no-stamp", "--allow-capital", "--desktop", "--no-start-menu" };
 
         public static readonly string[] Reasons =
         {
@@ -99,11 +99,13 @@ namespace Sibir.Cli
                             var exe = Shell.ShellIntegration.InstallFiles(System.Reflection.Assembly.GetEntryAssembly().Location);
                             Shell.ShellIntegration.Install(k, exe);
                             Plaque.EnsureArchive(Shell.ShellIntegration.InstallDir);
+                            Shell.ShellIntegration.CreateShortcuts(exe, !a.Has("--no-start-menu"), a.Has("--desktop"));
                             w.Result(exe, "done", "ok", "Встал на учёт");
                         }
                         return 0;
                     case "uninstall":
                         using (var k = Shell.ShellIntegration.UserClasses()) Shell.ShellIntegration.Uninstall(k);
+                        Shell.ShellIntegration.RemoveAllShortcuts();
                         w.Result(Shell.ShellIntegration.InstalledExe, "done", "ok", "Снят с учёта (архив сохранён)");
                         return 0;
                 }
@@ -293,8 +295,8 @@ namespace Sibir.Cli
                 ["recover"] = "recover [--yes] — finish or roll back interrupted operations",
                 ["schema"] = "schema — this description",
                 ["selftest"] = "selftest [--to <root on another drive>] — built-in test range",
-                ["install"] = "install — copy Peressylkin.exe to %LOCALAPPDATA%\\Sibir and add Explorer menu items (HKCU, no admin)",
-                ["uninstall"] = "uninstall — remove Explorer menu items (archive kept)",
+                ["install"] = "install [--desktop] [--no-start-menu] — copy Peressylkin.exe to %LOCALAPPDATA%\\Sibir, add Explorer menu items (HKCU, no admin) and a Start menu (default) / desktop shortcut",
+                ["uninstall"] = "uninstall — remove Explorer menu items and our shortcuts (archive kept)",
             },
             ["flags"] = Flags.ToArray(),
             ["result_fields"] = new[] { "path", "verdict (ok|warn|refused|done|failed|unfinished|exiled)", "reason", "message (human, Russian)", "target", "bytes", "processes" },
@@ -311,6 +313,8 @@ namespace Sibir.Cli
          [--strict] [--ignore-launcher] [--by-name] [--no-stamp] [--allow-capital]
   rehab  <path>... --yes                   реабилитировать
   status <path>... | list | recover [--yes] | schema | selftest [--to <root>]
+  install [--desktop] [--no-start-menu]    встать на учёт (ярлык в Пуске; --desktop — и на рабочем столе)
+  uninstall                                сняться с учёта (архив остаётся)
   --json  машинный вывод. В PowerShell: & Peressylkin.exe ... | Out-String";
     }
 

@@ -13,6 +13,8 @@ namespace Sibir.Gui
     internal sealed class MainForm : Form
     {
         private readonly Button _register = new Button { AutoSize = true, Height = 32 };
+        private readonly CheckBox _startMenu = new CheckBox { Text = "Ярлык в меню Пуск", Checked = true, AutoSize = true, Padding = new Padding(6, 6, 0, 0) };
+        private readonly CheckBox _desktop = new CheckBox { Text = "Ярлык на рабочем столе", AutoSize = true, Padding = new Padding(6, 6, 0, 0) };
         private readonly ListView _archive = new ListView { Dock = DockStyle.Fill, View = View.Details, FullRowSelect = true };
         private readonly CheckedListBox _regime = new CheckedListBox { Dock = DockStyle.Right, Width = 170, CheckOnClick = true };
         private readonly Settings _settings;
@@ -27,7 +29,7 @@ namespace Sibir.Gui
 
             var range = new Button { Text = "Полигон (самопроверка)", AutoSize = true, Height = 32 };
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 44, Padding = new Padding(4) };
-            buttons.Controls.Add(_register); buttons.Controls.Add(range);
+            buttons.Controls.Add(_register); buttons.Controls.Add(_startMenu); buttons.Controls.Add(_desktop); buttons.Controls.Add(range);
             buttons.Controls.Add(new Label { Text = "Правой кнопкой по папке → «Показать дополнительные параметры» → " + Strings.MenuExile, AutoSize = true, Padding = new Padding(8, 9, 0, 0) });
 
             _archive.Columns.Add("Место прописки", 300); _archive.Columns.Add("Место ссылки", 300); _archive.Columns.Add("Вес", 70); _archive.Columns.Add("Статус", 120);
@@ -50,7 +52,11 @@ namespace Sibir.Gui
         private void RefreshState()
         {
             using (var k = ShellIntegration.UserClasses())
-                _register.Text = ShellIntegration.IsInstalled(k) ? "Сняться с учёта" : "Встать на учёт";
+            {
+                var installed = ShellIntegration.IsInstalled(k);
+                _register.Text = installed ? "Сняться с учёта" : "Встать на учёт";
+                _startMenu.Enabled = _desktop.Enabled = !installed;
+            }
             _archive.Items.Clear();
             foreach (var r in GuiApp.Ctx.Archive.Current().Reverse())
                 _archive.Items.Add(new ListViewItem(new[] { r.Source, r.Target, Strings.Size(r.Bytes), GuiApp.StatusText(r.Status) }));
@@ -69,13 +75,15 @@ namespace Sibir.Gui
                 if (ShellIntegration.IsInstalled(k))
                 {
                     ShellIntegration.Uninstall(k);
-                    MessageBox.Show(this, "Снят с учёта. Пункты меню убраны, архив сохранён.", Strings.AppName);
+                    ShellIntegration.RemoveAllShortcuts();
+                    MessageBox.Show(this, "Снят с учёта. Пункты меню и ярлыки убраны, архив сохранён.", Strings.AppName);
                 }
                 else
                 {
                     var exe = ShellIntegration.InstallFiles(Application.ExecutablePath);
                     ShellIntegration.Install(k, exe);
                     Sibir.Core.Plaque.EnsureArchive(ShellIntegration.InstallDir);
+                    ShellIntegration.CreateShortcuts(exe, _startMenu.Checked, _desktop.Checked);
                     MessageBox.Show(this, "Встал на учёт: " + exe + "\n\nПравой кнопкой по папке → «Показать дополнительные параметры» → " + Strings.MenuExile, Strings.AppName);
                 }
             }

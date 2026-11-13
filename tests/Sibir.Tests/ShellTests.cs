@@ -62,6 +62,46 @@ namespace Sibir.Tests
             }
         }
 
+        [Fact] public void ShortcutName_ByUiLanguage()
+        {
+            Assert.Equal("Перессылкин", ShellIntegration.ShortcutName(System.Globalization.CultureInfo.GetCultureInfo("ru-RU")));
+            Assert.Equal("Peressylkin", ShellIntegration.ShortcutName(System.Globalization.CultureInfo.GetCultureInfo("en-US")));
+            Assert.Equal("Peressylkin", ShellIntegration.ShortcutName(System.Globalization.CultureInfo.GetCultureInfo("de-DE")));
+        }
+
+        [Fact] public void Shortcut_CreateThenRemove()
+        {
+            using (var t = new TempDir())
+            {
+                var exe = t.Sub("Peressylkin.exe"); System.IO.File.WriteAllText(exe, "x");
+                var dir = t.Sub("Programs");
+                ShellIntegration.CreateShortcut(dir, exe, System.Globalization.CultureInfo.GetCultureInfo("ru-RU"));
+                Assert.True(System.IO.File.Exists(System.IO.Path.Combine(dir, "Перессылкин.lnk")), "ru shortcut");
+                ShellIntegration.CreateShortcut(dir, exe, System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+                Assert.True(System.IO.File.Exists(System.IO.Path.Combine(dir, "Peressylkin.lnk")), "en shortcut");
+                ShellIntegration.RemoveShortcuts(dir, exe);
+                Assert.Empty(System.IO.Directory.GetFiles(dir, "*.lnk"));
+            }
+        }
+
+        [Fact] public void RemoveShortcuts_KeepsForeignTarget()
+        {
+            using (var t = new TempDir())
+            {
+                var ours = t.Sub("Peressylkin.exe"); System.IO.File.WriteAllText(ours, "x");
+                var other = t.Sub("other.exe"); System.IO.File.WriteAllText(other, "x");
+                var dir = t.Sub("Desktop");
+                ShellIntegration.CreateShortcut(dir, other, System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+                ShellIntegration.RemoveShortcuts(dir, ours);
+                Assert.True(System.IO.File.Exists(System.IO.Path.Combine(dir, "Peressylkin.lnk")), "foreign shortcut kept");
+            }
+        }
+
+        [Fact] public void RemoveShortcuts_MissingDir_DoesNotThrow()
+        {
+            using (var t = new TempDir()) ShellIntegration.RemoveShortcuts(t.Sub("nope"), t.Sub("Peressylkin.exe"));
+        }
+
         [Fact] public void InstalledExe_IsPeressylkin() =>
             Assert.Equal("Peressylkin.exe", System.IO.Path.GetFileName(ShellIntegration.InstalledExe));
 
