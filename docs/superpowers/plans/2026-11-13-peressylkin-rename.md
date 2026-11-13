@@ -94,6 +94,21 @@ Plaque texts (exact copy, Russian, plain text):
 - [ ] **Step 4:** `./build.ps1` → pass, prints `OK: out\Peressylkin.exe`.
 - [ ] **Step 5:** Commit `feat: exe renamed to Peressylkin.exe, legacy Sibir.exe cleaned on install`.
 
+### Task 3b: Start menu shortcut
+
+**Files:**
+- Modify: `src/Sibir/Shell/ShellIntegration.cs`, install/uninstall call sites in `src/Sibir/Cli/Cli.cs` (~94-105) and `src/Sibir/Gui/MainForm.cs` (`ToggleRegistration`)
+- Test: `tests/Sibir.Tests/ShellTests.cs`
+
+**Interfaces:**
+- Produces: `static string ShortcutName(CultureInfo ui)` → `"Перессылкин"` if `ui.TwoLetterISOLanguageName == "ru"`, else `"Peressylkin"`; `static void CreateShortcut(string programsDir, string exePath, CultureInfo ui)`; `static void RemoveShortcuts(string programsDir)` (deletes both `Перессылкин.lnk` and `Peressylkin.lnk`, ignores missing). Callers pass `Environment.GetFolderPath(SpecialFolder.Programs)` and `CultureInfo.CurrentUICulture`.
+
+- [ ] **Step 1: Failing tests** `ShortcutName_ByUiLanguage` (`ru-RU` → «Перессылкин», `en-US` and `de-DE` → «Peressylkin»); `Shortcut_CreateThenRemove` in a temp dir: `.lnk` exists after create, and after switching culture + create + `RemoveShortcuts` no `.lnk` remains.
+- [ ] **Step 2:** `./build.ps1 -Filter Shortcut` → FAIL.
+- [ ] **Step 3:** Implement via `WScript.Shell` COM (`Type.GetTypeFromProgID("WScript.Shell")`, `dynamic`): `TargetPath` = exe, `IconLocation` = `exe,0`, `WorkingDirectory` = exe dir. Install creates, uninstall removes; failures to create a shortcut do not fail install.
+- [ ] **Step 4:** `./build.ps1` → pass.
+- [ ] **Step 5:** Commit `feat: localized Start menu shortcut`.
+
 ### Task 4: Docs and repository
 
 **Files:**
@@ -108,5 +123,5 @@ Plaque texts (exact copy, Russian, plain text):
 
 - [ ] **Step 1:** `./build.ps1` → `Passed!`, `OK: out\Peressylkin.exe`. Run `out\Peressylkin.exe selftest --json | Out-String` → exit 0.
 - [ ] **Step 2:** Assemble `dist\Peressylkin\` (Peressylkin.exe, sibir.ico, stamp.ico, AGENTS.md, `claude-skill\SKILL.md`, `ПРОЧТИ.txt` = dist-readme.txt) and zip to `dist\Peressylkin-1.1.0.zip`.
-- [ ] **Step 3:** Ask the user to install over their 1.0.0 (`Peressylkin.exe` → «Встать на учёт») and confirm: menu items work, old `Sibir.exe` gone from `%LOCALAPPDATA%\Sibir`, both plaques present after one exile, `Личное дело` shows old cases.
+- [ ] **Step 3:** Ask the user to install over their 1.0.0 (`Peressylkin.exe` → «Встать на учёт») and confirm: menu items work, Start menu shows «Перессылкин», old `Sibir.exe` gone from `%LOCALAPPDATA%\Sibir`, both plaques present after one exile, `Личное дело` shows old cases.
 - [ ] **Step 4:** Tag `v1.1.0`, `gh release create v1.1.0 dist\Peressylkin-1.1.0.zip` with notes (rename, plaques, protection, unsigned-exe SmartScreen note).
