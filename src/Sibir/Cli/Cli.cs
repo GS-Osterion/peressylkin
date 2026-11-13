@@ -18,6 +18,8 @@ namespace Sibir.Cli
     internal sealed class CliContext
     {
         public Archive Archive { get; set; }
+        /// <summary>Folder of the case archive file: protected and marked with the archive plaque.</summary>
+        public string ArchiveDir => Path.GetDirectoryName(Archive.FilePath);
         public IDriveEnv Drives { get; set; }
         public ILauncherEnv Launchers { get; set; }
         public string SettingsPath { get; set; }
@@ -96,6 +98,7 @@ namespace Sibir.Cli
                         {
                             var exe = Shell.ShellIntegration.InstallFiles(System.Reflection.Assembly.GetEntryAssembly().Location);
                             Shell.ShellIntegration.Install(k, exe);
+                            Plaque.EnsureArchive(Shell.ShellIntegration.InstallDir);
                             w.Result(exe, "done", "ok", "Встал на учёт");
                         }
                         return 0;
@@ -126,8 +129,9 @@ namespace Sibir.Cli
                 foreach (var p in a.Paths) w.Result(p, "refused", "no_destination", Strings.NoDestination);
                 return ExitCodes.Refused;
             }
-            var opt = new CheckOptions { ByName = a.Has("--by-name"), IgnoreLauncher = a.Has("--ignore-launcher"), Settings = settings };
+            var opt = new CheckOptions { ByName = a.Has("--by-name"), IgnoreLauncher = a.Has("--ignore-launcher"), Settings = settings, ArchiveDir = ctx.ArchiveDir };
             var checks = Checks.Run(a.Paths, root, opt, ctx.Drives, ctx.Archive, p => LauncherDetect.Detect(p, ctx.Launchers));
+            if (doIt && checks.Any(c => c.Verdict != Verdict.Refused)) { Plaque.EnsureArchive(ctx.ArchiveDir); Plaque.EnsureSiberia(root); }
             int code = 0;
             var mover = NewMover(a, ctx);
             foreach (var c in checks)

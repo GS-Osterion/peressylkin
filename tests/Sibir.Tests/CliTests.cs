@@ -19,7 +19,7 @@ namespace Sibir.Tests
         {
             var env = new FakeEnv().Drive(@"C:\", "volC", 100).Drive(@"T:\", "volT", 100).Drive(@"D:\", "volD", 100);
             env.Map(_t.Sub("c"), "volC").Map(_t.Sub("t"), "volT").Map(_t.Sub("d"), "volD");
-            _ctx = new CliContext { Archive = new Archive(_t.Sub("archive.jsonl")), Drives = env, Launchers = new FakeLaunchers(), SettingsPath = _t.Sub("settings.json") };
+            _ctx = new CliContext { Archive = new Archive(_t.Sub(@"arch\archive.jsonl")), Drives = env, Launchers = new FakeLaunchers(), SettingsPath = _t.Sub("settings.json") };
             _root = _t.Sub(@"t\Сибирь");
         }
 
@@ -51,6 +51,31 @@ namespace Sibir.Tests
             var o = new StringWriter();
             Sibir.Cli.Cli.Run(new[] { "check", Src(@"c\Игра"), "--to", _root, "--json" }, o, new StringWriter(), _ctx);
             Assert.True(o.ToString().All(ch => ch < 128), "non-ASCII in JSON output");
+        }
+
+        [Fact] public void Exile_PlacesBothPlaques()
+        {
+            var (code, _, _) = Run("exile", Src(@"c\A"), "--to", _root, "--yes", "--json");
+            Assert.Equal(0, code);
+            Assert.True(File.Exists(Path.Combine(_root, Plaque.SiberiaFile)), "Siberia plaque");
+            Assert.True(File.Exists(Path.Combine(_t.Sub("arch"), Plaque.ArchiveFile)), "archive plaque next to archive.jsonl");
+        }
+
+        [Fact] public void Check_PlacesNothing()
+        {
+            Run("check", Src(@"c\A"), "--to", _root, "--json");
+            Assert.False(File.Exists(Path.Combine(_root, Plaque.SiberiaFile)), "no Siberia plaque on check");
+            Assert.False(File.Exists(Path.Combine(_t.Sub("arch"), Plaque.ArchiveFile)), "no archive plaque on check");
+        }
+
+        [Fact] public void Check_RefusesArchiveDirOfContext()
+        {
+            var (code, rows, _) = Run("check", Src(@"c\arch"), "--to", _root, "--json");
+            Assert.Equal(0, code);
+            _ctx.Archive = new Archive(_t.Sub(@"c\arch\archive.jsonl"));
+            var (code2, rows2, _) = Run("check", _t.Sub(@"c\arch"), "--to", _root, "--json");
+            Assert.Equal(2, code2);
+            Assert.Equal("peressylkin_property", rows2[0]["reason"]);
         }
 
         [Fact] public void Exile_WithoutYes_ChangesNothing()

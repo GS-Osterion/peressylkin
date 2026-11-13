@@ -132,6 +132,8 @@ namespace Sibir.Gui
             var saved = Settings.Load(GuiApp.Ctx.SettingsPath);
             saved.LastRoot = _root.Text; saved.ProtectCapital = _capital.Checked; saved.Save(GuiApp.Ctx.SettingsPath);
             var mover = GuiApp.NewMover(_strict.Checked, _stamp.Checked);
+            Plaque.EnsureArchive(GuiApp.Ctx.ArchiveDir);
+            Plaque.EnsureSiberia(_root.Text);
             Hide();
             new ProgressForm(sel.Select(c => new ProgressForm.Job(c.Path, (p, ct) => mover.Exile(c.Path, c.Target, p, ct))).ToList()).ShowDialog();
             Close();

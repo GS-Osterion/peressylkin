@@ -75,6 +75,7 @@ namespace Sibir.Gui
                 {
                     var exe = ShellIntegration.InstallFiles(Application.ExecutablePath);
                     ShellIntegration.Install(k, exe);
+                    Sibir.Core.Plaque.EnsureArchive(ShellIntegration.InstallDir);
                     MessageBox.Show(this, "Встал на учёт: " + exe + "\n\nПравой кнопкой по папке → «Показать дополнительные параметры» → " + Strings.MenuExile, Strings.AppName);
                 }
             }
