@@ -1,49 +1,55 @@
-# Ссылка в Сибирь (Sibir)
+# Peressylkin
 
-Освобождает место на переполненном диске: переносит папку на другой диск, а на старом
-месте оставляет NTFS-ссылку (junction). Программы и игры продолжают работать по старому
-пути и ничего не замечают. Всё обратимо («Реабилитировать»), данные не удаляются никогда:
-оригинал стирается только после того, как копия сверена и ссылка работает.
+*«Перессылкин» — «Ссылка в Сибирь» (Exile to Siberia). Интерфейс программы на русском; issues принимаются на русском и на английском.*
 
-Windows 10/11, без установки зависимостей и без прав администратора.
+Frees up space on a full drive: moves a folder to another drive and leaves an NTFS junction
+at the old path, so programs and games keep working and never notice. Everything is reversible
+("rehabilitate"), and data is never deleted: the original is removed only after the copy is
+verified and the junction works.
 
-## Скачать
+Windows 10/11. No dependencies, no administrator rights.
 
-Готовый архив — в [Releases](../../releases). Как пользоваться — в
-[dist-readme.txt](dist-readme.txt) (он же лежит в архиве).
+Comrade Peressylkin exiles folders to Siberia — hence the theme, and hence the historical
+names that stay on purpose: the case archive lives in `%LOCALAPPDATA%\Sibir`, exiled folders in
+`X:\Сибирь`.
 
-Коротко: правой кнопкой по папке → «Показать дополнительные параметры» →
-«Сослать в Сибирь…» → «С вещами на выход!».
+## Download
 
-## Для ИИ-агентов и скриптов
+Get the archive from [Releases](../../releases). The user guide (Russian) is
+[dist-readme.txt](dist-readme.txt), also included in the archive.
 
-Консольный режим без окон, JSON на выходе:
+In short: right-click a folder → "Show more options" → «Сослать в Сибирь…» → «С вещами на выход!».
+
+## For AI agents and scripts
+
+Windowless console mode with JSON output:
 
 ```
-Sibir.exe check  <path>... [--to <root>] --json
-Sibir.exe exile  <path>... [--to <root>] --yes --json
-Sibir.exe rehab  <path>... --yes --json
+Peressylkin.exe check  <path>... [--to <root>] --json
+Peressylkin.exe exile  <path>... [--to <root>] --yes --json
+Peressylkin.exe rehab  <path>... --yes --json
 ```
 
-Полное описание команд, кодов выхода и безопасного порядка — [AGENTS.md](AGENTS.md).
-Skill для Claude Code — [docs/claude-skill/SKILL.md](docs/claude-skill/SKILL.md).
+Commands, exit codes and the safe order are in [AGENTS.md](AGENTS.md).
+A Claude Code skill is in [docs/claude-skill/SKILL.md](docs/claude-skill/SKILL.md).
 
-## Сборка
+## Building
 
-Нужен .NET SDK (целевая платформа — .NET Framework 4.8, она уже есть в Windows).
+Requires the .NET SDK (target: .NET Framework 4.8, already part of Windows).
 
 ```powershell
-./build.ps1            # иконки → сборка → тесты → out\Sibir.exe
+./build.ps1            # icons → build → tests → out\Peressylkin.exe
 ./build.ps1 -NoTests
 ```
 
-Дизайн и план — `docs/superpowers/`, результаты полевых испытаний — `docs/field-tests.md`.
+Design and plans: `docs/superpowers/`. Field test results: `docs/field-tests.md`.
+The source tree still uses the `Sibir` namespace and project names — the project was called Sibir before 1.1.0.
 
-## Сообщить о проблеме
+## Reporting a problem
 
-[Issues](../../issues) — приложите вывод `Sibir.exe status <папка> --json`
-и что именно произошло.
+Open an [issue](../../issues) and include the output of `Peressylkin.exe status <folder> --json`
+and what exactly happened.
 
-## Лицензия
+## License
 
 [MIT](LICENSE)

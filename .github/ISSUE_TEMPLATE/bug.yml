@@ -21,13 +21,13 @@ body:
     id: status
     attributes:
       label: Status output
-      description: "Run `Sibir.exe status <folder> --json` (in PowerShell: `& Sibir.exe status <folder> --json | Out-String`) and paste the result."
+      description: "Run `Peressylkin.exe status <folder> --json` (in PowerShell: `& Peressylkin.exe status <folder> --json | Out-String`) and paste the result."
       render: json
   - type: input
     id: version
     attributes:
       label: Program and Windows version
-      placeholder: "Sibir 1.0.0, Windows 11 24H2"
+      placeholder: "Peressylkin 1.1.0, Windows 11 24H2"
     validations:
       required: true
   - type: dropdown
