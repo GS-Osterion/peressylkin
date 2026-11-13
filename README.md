@@ -31,7 +31,7 @@ Peressylkin.exe rehab  <path>... --yes --json
 ```
 
 Commands, exit codes and the safe order are in [AGENTS.md](AGENTS.md).
-A Claude Code skill is in [docs/claude-skill/SKILL.md](docs/claude-skill/SKILL.md).
+A skill for agents (command order for every case) is in [docs/claude-skill/SKILL.md](docs/claude-skill/SKILL.md).
 
 ## Building
 

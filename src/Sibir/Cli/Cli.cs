@@ -98,6 +98,7 @@ namespace Sibir.Cli
                         {
                             var exe = Shell.ShellIntegration.InstallFiles(System.Reflection.Assembly.GetEntryAssembly().Location);
                             Shell.ShellIntegration.Install(k, exe);
+                            Shell.ShellIntegration.RemoveLegacyExe();
                             Plaque.EnsureArchive(Shell.ShellIntegration.InstallDir);
                             Shell.ShellIntegration.CreateShortcuts(exe, !a.Has("--no-start-menu"), a.Has("--desktop"));
                             w.Result(exe, "done", "ok", "Встал на учёт");

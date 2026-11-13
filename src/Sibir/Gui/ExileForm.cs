@@ -22,6 +22,7 @@ namespace Sibir.Gui
         private readonly Button _go = new Button { Text = Strings.GoButton, AutoSize = true, Height = 34 };
         private readonly Timer _debounce = new Timer { Interval = 400 };
         private List<CheckResult> _checks = new List<CheckResult>();
+        private string _checkedRoot;   // root the shown list was checked against
         private bool _refreshing;
 
         public ExileForm(string[] paths)
@@ -70,6 +71,7 @@ namespace Sibir.Gui
         private void Recheck()
         {
             _refreshing = true;
+            _checkedRoot = _root.Text;
             _settings.ProtectCapital = _capital.Checked;
             _list.Items.Clear();
             if (string.IsNullOrWhiteSpace(_root.Text))
@@ -80,7 +82,7 @@ namespace Sibir.Gui
             {
                 try
                 {
-                    _checks = Checks.Run(_paths, _root.Text, new CheckOptions { ByName = _byName.Checked, Settings = _settings }, GuiApp.Ctx.Drives, GuiApp.Ctx.Archive,
+                    _checks = Checks.Run(_paths, _root.Text, new CheckOptions { ByName = _byName.Checked, Settings = _settings, ArchiveDir = GuiApp.Ctx.ArchiveDir }, GuiApp.Ctx.Drives, GuiApp.Ctx.Archive,
                         p => LauncherDetect.Detect(p, GuiApp.Ctx.Launchers));
                 }
                 catch (Exception ex)
@@ -120,20 +122,24 @@ namespace Sibir.Gui
 
         private void Go()
         {
+            // The path was edited after the last check: show the fresh verdicts instead of exiling by stale ones.
+            if (!string.Equals(_root.Text, _checkedRoot, StringComparison.Ordinal)) { _debounce.Stop(); Recheck(); return; }
+            var root = _checkedRoot;
             var sel = Selected();
             // Launcher overrides: re-check those paths with IgnoreLauncher so size/space are computed too.
             var overridden = sel.Where(c => c.Reason == "launcher").Select(c => c.Path).ToList();
             if (overridden.Count > 0)
             {
-                var again = Checks.Run(overridden, _root.Text, new CheckOptions { ByName = _byName.Checked, IgnoreLauncher = true, Settings = _settings },
+                var again = Checks.Run(overridden, root, new CheckOptions { ByName = _byName.Checked, IgnoreLauncher = true, Settings = _settings, ArchiveDir = GuiApp.Ctx.ArchiveDir },
                     GuiApp.Ctx.Drives, GuiApp.Ctx.Archive, p => LauncherDetect.Detect(p, GuiApp.Ctx.Launchers));
                 sel = sel.Where(c => c.Reason != "launcher").Concat(again.Where(c => c.Verdict != Verdict.Refused)).ToList();
             }
+            if (sel.Count == 0) { Recheck(); return; }
             var saved = Settings.Load(GuiApp.Ctx.SettingsPath);
-            saved.LastRoot = _root.Text; saved.ProtectCapital = _capital.Checked; saved.Save(GuiApp.Ctx.SettingsPath);
+            saved.LastRoot = root; saved.ProtectCapital = _capital.Checked; saved.Save(GuiApp.Ctx.SettingsPath);
             var mover = GuiApp.NewMover(_strict.Checked, _stamp.Checked);
             Plaque.EnsureArchive(GuiApp.Ctx.ArchiveDir);
-            Plaque.EnsureSiberia(_root.Text);
+            Plaque.EnsureSiberia(root);
             Hide();
             new ProgressForm(sel.Select(c => new ProgressForm.Job(c.Path, (p, ct) => mover.Exile(c.Path, c.Target, p, ct))).ToList()).ShowDialog();
             Close();

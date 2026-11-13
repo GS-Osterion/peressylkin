@@ -82,6 +82,7 @@ namespace Sibir.Gui
                 {
                     var exe = ShellIntegration.InstallFiles(Application.ExecutablePath);
                     ShellIntegration.Install(k, exe);
+                    ShellIntegration.RemoveLegacyExe();
                     Sibir.Core.Plaque.EnsureArchive(ShellIntegration.InstallDir);
                     ShellIntegration.CreateShortcuts(exe, _startMenu.Checked, _desktop.Checked);
                     MessageBox.Show(this, "Встал на учёт: " + exe + "\n\nПравой кнопкой по папке → «Показать дополнительные параметры» → " + Strings.MenuExile, Strings.AppName);

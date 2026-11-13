@@ -35,7 +35,7 @@ namespace Sibir.Tests
             finally { Registry.CurrentUser.DeleteSubKeyTree(@"Software\SibirTests", false); }
         }
 
-        [Fact] public void InstallFiles_RemovesLegacyExe()
+        [Fact] public void InstallFiles_KeepsLegacyUntilMenuRewritten_ThenRemoved()
         {
             using (var t = new TempDir())
             {
@@ -45,6 +45,8 @@ namespace Sibir.Tests
                 var exe = ShellIntegration.InstallFiles(from, dir);
                 Assert.Equal(System.IO.Path.Combine(dir, "Peressylkin.exe"), exe);
                 Assert.Equal("new", System.IO.File.ReadAllText(exe));
+                Assert.True(System.IO.File.Exists(System.IO.Path.Combine(dir, "Sibir.exe")), "legacy kept until the menu points to the new exe");
+                ShellIntegration.RemoveLegacyExe(dir);
                 Assert.False(System.IO.File.Exists(System.IO.Path.Combine(dir, "Sibir.exe")), "legacy Sibir.exe removed");
             }
         }
@@ -58,7 +60,10 @@ namespace Sibir.Tests
                 var legacy = System.IO.Path.Combine(dir, "Sibir.exe");
                 System.IO.File.WriteAllText(legacy, "old");
                 using (System.IO.File.Open(legacy, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.None))
+                {
                     Assert.Equal(System.IO.Path.Combine(dir, "Peressylkin.exe"), ShellIntegration.InstallFiles(from, dir));
+                    ShellIntegration.RemoveLegacyExe(dir);
+                }
             }
         }
 

@@ -45,4 +45,5 @@ human the command from `message` · 6 unfinished cases — run `recover --yes` f
 - Names: the program is Peressylkin; `%LOCALAPPDATA%\Sibir`, `X:\Сибирь`, registry keys `Sibir*`,
   namespace `Sibir` and `reason` codes keep the historical name on purpose (Comrade Peressylkin exiles to Siberia).
 - Data is never deleted: the original is removed only after the copy is verified and the junction works.
-- Install the Claude Code skill: copy `docs/claude-skill/SKILL.md` to `~/.claude/skills/sibir/SKILL.md`.
+- Set up a skill for this program: `docs/claude-skill/SKILL.md` holds the command order for every case
+  (exile, refusals, interruptions, rehab, install/update). Put it where your agent loads skills from.

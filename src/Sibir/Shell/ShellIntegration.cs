@@ -121,7 +121,7 @@ namespace Sibir.Shell
         /// <summary>Exe name of version 1.0.0; removed on install.</summary>
         public const string LegacyExe = "Sibir.exe";
 
-        /// <summary>Copies the running exe and its icons into the install dir, removes the legacy exe. Returns the installed exe path.</summary>
+        /// <summary>Copies the running exe and its icons into the install dir. Returns the installed exe path.</summary>
         public static string InstallFiles(string fromExe, string installDir = null)
         {
             installDir = installDir ?? InstallDir;
@@ -136,10 +136,15 @@ namespace Sibir.Shell
                 if (File.Exists(src) && !string.Equals(dir, installDir, StringComparison.OrdinalIgnoreCase))
                     File.Copy(src, Path.Combine(installDir, ico), true);
             }
-            try { File.Delete(Path.Combine(installDir, LegacyExe)); }
+            return target;
+        }
+
+        /// <summary>Call after the menu points to the new exe: removes 1.0.0's Sibir.exe, best effort.</summary>
+        public static void RemoveLegacyExe(string installDir = null)
+        {
+            try { File.Delete(Path.Combine(installDir ?? InstallDir, LegacyExe)); }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
-            return target;
         }
     }
 }
