@@ -1,0 +1,35 @@
+name: Ошибка
+description: Что-то пошло не так при ссылке, реабилитации или в окнах программы
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Что произошло
+      description: Что делали, что ожидали, что получили. Текст сообщения программы — дословно.
+    validations:
+      required: true
+  - type: input
+    id: folder
+    attributes:
+      label: Какая папка
+      description: Путь и чья это папка (игра, программа). Личные части пути можно заменить на ***.
+  - type: textarea
+    id: status
+    attributes:
+      label: Вывод status
+      description: "Выполните `Sibir.exe status <папка> --json` (в PowerShell: `& Sibir.exe status <папка> --json | Out-String`) и вставьте результат."
+      render: json
+  - type: input
+    id: version
+    attributes:
+      label: Версия Sibir и Windows
+      placeholder: "Sibir 1.0.0, Windows 11 24H2"
+    validations:
+      required: true
+  - type: checkboxes
+    id: safe
+    attributes:
+      label: Данные
+      options:
+        - label: Все данные на месте (в исходной папке или в «Сибири»)
