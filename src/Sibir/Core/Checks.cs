@@ -25,6 +25,8 @@ namespace Sibir.Core
         public bool ByName { get; set; }
         public bool IgnoreLauncher { get; set; }
         public Settings Settings { get; set; }
+        /// <summary>Folder holding the case archive; it and its ancestors are never exiled.</summary>
+        public string ArchiveDir { get; set; } = Plaque.DefaultArchiveDir;
     }
 
     /// <summary>Step 0: read-only pre-flight checks (spec §5).</summary>
@@ -50,6 +52,10 @@ namespace Sibir.Core
             if (LongPath.SameOrUnder(n, System.IO.Path.GetPathRoot(n) + "XboxGames")) return true;
             return ProtectedRoots().Any(p => LongPath.Same(n, p));
         }
+
+        /// <summary>The case archive, anything inside it, any folder containing it, or any folder with a plaque.</summary>
+        public static bool IsProperty(string path, string archiveDir) =>
+            LongPath.SameOrUnder(path, archiveDir) || LongPath.SameOrUnder(archiveDir, path) || Plaque.IsMarked(path);
 
         private static bool UnderReparsePoint(string path)
         {
@@ -78,6 +84,7 @@ namespace Sibir.Core
                 if (!Directory.Exists(LongPath.Ex(src)) && !Junction.IsReparsePoint(src)) { Refuse("not_found", "Гражданин не найден по указанному адресу"); continue; }
                 if (normalized.Any(o => !LongPath.Same(o, src) && LongPath.SameOrUnder(src, o))) { Refuse("nested", Strings.Nested); continue; }
                 if (IsProtected(src)) { Refuse("protected", Strings.Protected); continue; }
+                if (IsProperty(src, opt.ArchiveDir)) { Refuse("peressylkin_property", Strings.Property); continue; }
                 if (UnderReparsePoint(src)) { Refuse("already_exiled", Strings.AlreadyExiled); continue; }
                 if (exiled.Any(e => LongPath.Same(e.Source, src))) { Refuse("case_open", Strings.CaseOpen); continue; }
                 if (exiled.Any(e => LongPath.SameOrUnder(src, e.Target)) || LongPath.SameOrUnder(src, rootN)) { Refuse("in_siberia", Strings.InSiberia); continue; }

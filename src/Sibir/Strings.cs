@@ -15,6 +15,7 @@ namespace Sibir
         public const string Progress = "Столыпин в пути…";
         public const string SameDrive = "Это не ссылка, а прогулка по камере";
         public const string Protected = "Член Политбюро. Неприкосновенен";
+        public const string Property = "Имущество тов. Перессылкина. Ссылке не подлежит";
         public const string AlreadyExiled = "Повторно не судят";
         public const string InSiberia = "Уже отбывает срок. Вернуть — через реабилитацию";
         public const string CaseOpen = "Дело уже заведено: по архиву гражданин сослан";

@@ -43,7 +43,7 @@ namespace Sibir.Cli
 
         public static readonly string[] Reasons =
         {
-            "ok", "already_exiled", "in_siberia", "case_open", "target_is_source", "capital", "regime_city", "protected", "same_drive",
+            "ok", "already_exiled", "in_siberia", "peressylkin_property", "case_open", "target_is_source", "capital", "regime_city", "protected", "same_drive",
             "network_target", "no_space", "removable_target", "launcher", "store_app", "registered_app", "nested", "target_exists",
             "locked", "needs_admin", "copy_failed", "verify_failed", "not_exiled", "no_destination", "bad_args", "not_found", "cancelled",
         };

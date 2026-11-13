@@ -63,6 +63,40 @@ namespace Sibir.Tests
             Is(One(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), Verdict.Refused, "protected");
         }
 
+        private string ArchiveDir => _t.Sub(@"c\Users\u\AppData\Local\Sibir");
+        private CheckOptions WithArchive() => new CheckOptions { ArchiveDir = ArchiveDir };
+
+        [Fact] public void Property_ArchiveItself() => Is(One(Src(@"c\Users\u\AppData\Local\Sibir"), o: WithArchive()), Verdict.Refused, "peressylkin_property");
+
+        [Fact] public void Property_InsideArchive() => Is(One(Src(@"c\Users\u\AppData\Local\Sibir\sub"), o: WithArchive()), Verdict.Refused, "peressylkin_property");
+
+        [Fact] public void Property_AncestorOfArchive()
+        {
+            Src(@"c\Users\u\AppData\Local\Sibir");
+            Is(One(_t.Sub(@"c\Users\u\AppData\Local"), o: WithArchive()), Verdict.Refused, "peressylkin_property");
+            Is(One(_t.Sub(@"c\Users\u\AppData"), o: WithArchive()), Verdict.Refused, "peressylkin_property");
+        }
+
+        [Fact] public void Property_SiblingAllowed()
+        {
+            Src(@"c\Users\u\AppData\Local\Sibir");
+            Is(One(Src(@"c\Users\u\AppData\Local\papja"), o: WithArchive()), Verdict.Ok, "ok");
+        }
+
+        [Fact] public void Property_PlaqueAnywhere()
+        {
+            var s = Src(@"d\OldSiberia");
+            File.WriteAllText(Path.Combine(s, Plaque.SiberiaFile), "x");
+            Is(One(s, o: WithArchive()), Verdict.Refused, "peressylkin_property");
+        }
+
+        [Fact] public void Property_ArchivePathVariants()
+        {
+            var src = Src(@"c\Users\u\AppData\Local\Sibir");
+            Is(One(src, o: new CheckOptions { ArchiveDir = ArchiveDir + @"\" }), Verdict.Refused, "peressylkin_property");
+            Is(One(src, o: new CheckOptions { ArchiveDir = ArchiveDir.ToUpperInvariant() }), Verdict.Refused, "peressylkin_property");
+        }
+
         [Fact] public void InSiberia_TargetOfExiledRecord_AndInsideRoot()
         {
             var tgt = Src(@"t\Сибирь\C\x");
