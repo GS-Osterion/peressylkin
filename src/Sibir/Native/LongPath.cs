@@ -21,6 +21,21 @@ namespace Sibir.Native
             return full;
         }
 
+        /// <summary>Normalize, and replace a subst drive letter by the folder it aliases (repeatedly, for subst of subst).</summary>
+        public static string ResolveSubst(string path)
+        {
+            var n = Normalize(path);
+            for (int hop = 0; hop < 8 && n.Length >= 2 && n[1] == ':'; hop++)
+            {
+                var buf = new System.Text.StringBuilder(1024);
+                if (NativeMethods.QueryDosDevice(n.Substring(0, 2), buf, buf.Capacity) == 0) break;
+                var dev = buf.ToString();
+                if (!dev.StartsWith(@"\??\") || dev.Length < 6 || dev[5] != ':') break;   // a real volume (\Device\...), not a subst alias
+                n = Normalize(dev.Substring(4).TrimEnd('\\') + @"\" + n.Substring(3));
+            }
+            return n;
+        }
+
         /// <summary>Extended-length form for Win32 calls (\\?\ or \\?\UNC\).</summary>
         public static string Ex(string path)
         {

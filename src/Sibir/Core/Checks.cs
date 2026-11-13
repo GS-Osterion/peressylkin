@@ -67,9 +67,9 @@ namespace Sibir.Core
         public static List<CheckResult> Run(IReadOnlyList<string> sources, string root, CheckOptions opt, IDriveEnv env, Archive archive, Func<string, LauncherHit> detect)
         {
             var settings = opt.Settings ?? new Settings();
-            var normalized = sources.Select(LongPath.Normalize).ToList();
+            var normalized = sources.Select(LongPath.ResolveSubst).ToList();   // a subst alias must not slip past path-based protection
             var exiled = archive.Current().Where(r => r.Status == "exiled").ToList();
-            var rootN = LongPath.Normalize(root);
+            var rootN = LongPath.ResolveSubst(root);
             var rootVol = env.VolumeIdOf(rootN);
             var rootDrive = Destination.DriveOf(rootN, env);
             long planned = 0;
