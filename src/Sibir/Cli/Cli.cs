@@ -78,7 +78,7 @@ namespace Sibir.Cli
             var w = new Out(stdout, json);
             if (a == null || ((a.Command == "check" || a.Command == "exile" || a.Command == "rehab" || a.Command == "status") && a.Paths.Count == 0))
             {
-                w.Row(new Dictionary<string, object> { ["verdict"] = "refused", ["reason"] = "bad_args", ["message"] = "Неверные аргументы. Sibir.exe help" });
+                w.Row(new Dictionary<string, object> { ["verdict"] = "refused", ["reason"] = "bad_args", ["message"] = "Неверные аргументы. Peressylkin.exe help" });
                 return ExitCodes.BadArgs;
             }
             try
@@ -214,7 +214,7 @@ namespace Sibir.Cli
         private static int UnfinishedRow(CliContext ctx, Out w)
         {
             foreach (var r in ctx.Archive.Unfinished())
-                w.Result(r.Source, "refused", "unfinished", Strings.Recover + ": есть незакрытое дело. Sibir.exe recover --yes", r.Target, r.Bytes);
+                w.Result(r.Source, "refused", "unfinished", Strings.Recover + ": есть незакрытое дело. Peressylkin.exe recover --yes", r.Target, r.Bytes);
             return ExitCodes.Unfinished;
         }
 
@@ -282,7 +282,7 @@ namespace Sibir.Cli
 
         private static object Schema() => new Dictionary<string, object>
         {
-            ["tool"] = "Sibir (Ссылка в Сибирь): move folders to another drive, leave an NTFS junction at the old path",
+            ["tool"] = "Peressylkin (Перессылкин, Ссылка в Сибирь): move folders to another drive, leave an NTFS junction at the old path",
             ["commands"] = new Dictionary<string, object>
             {
                 ["check"] = "check <path>... [--to <root>] [--by-name] [--ignore-launcher] [--allow-capital] — dry run, changes nothing",
@@ -293,7 +293,7 @@ namespace Sibir.Cli
                 ["recover"] = "recover [--yes] — finish or roll back interrupted operations",
                 ["schema"] = "schema — this description",
                 ["selftest"] = "selftest [--to <root on another drive>] — built-in test range",
-                ["install"] = "install — copy to %LOCALAPPDATA%\\Sibir and add Explorer menu items (HKCU, no admin)",
+                ["install"] = "install — copy Peressylkin.exe to %LOCALAPPDATA%\\Sibir and add Explorer menu items (HKCU, no admin)",
                 ["uninstall"] = "uninstall — remove Explorer menu items (archive kept)",
             },
             ["flags"] = Flags.ToArray(),
@@ -305,13 +305,13 @@ namespace Sibir.Cli
         };
 
         private const string Help =
-@"Sibir.exe — Ссылка в Сибирь
+@"Peressylkin.exe — Перессылкин, Ссылка в Сибирь
   check  <path>... [--to <root>]           предварительное следствие (ничего не меняет)
   exile  <path>... [--to <root>] --yes     сослать (без --yes — только проверка)
          [--strict] [--ignore-launcher] [--by-name] [--no-stamp] [--allow-capital]
   rehab  <path>... --yes                   реабилитировать
   status <path>... | list | recover [--yes] | schema | selftest [--to <root>]
-  --json  машинный вывод. В PowerShell: & Sibir.exe ... | Out-String";
+  --json  машинный вывод. В PowerShell: & Peressylkin.exe ... | Out-String";
     }
 
     internal static class Extensions

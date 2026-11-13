@@ -35,6 +35,36 @@ namespace Sibir.Tests
             finally { Registry.CurrentUser.DeleteSubKeyTree(@"Software\SibirTests", false); }
         }
 
+        [Fact] public void InstallFiles_RemovesLegacyExe()
+        {
+            using (var t = new TempDir())
+            {
+                var from = t.Sub(@"dl\Peressylkin.exe"); System.IO.Directory.CreateDirectory(t.Sub("dl")); System.IO.File.WriteAllText(from, "new");
+                var dir = t.Sub("inst"); System.IO.Directory.CreateDirectory(dir);
+                System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "Sibir.exe"), "old");
+                var exe = ShellIntegration.InstallFiles(from, dir);
+                Assert.Equal(System.IO.Path.Combine(dir, "Peressylkin.exe"), exe);
+                Assert.Equal("new", System.IO.File.ReadAllText(exe));
+                Assert.False(System.IO.File.Exists(System.IO.Path.Combine(dir, "Sibir.exe")), "legacy Sibir.exe removed");
+            }
+        }
+
+        [Fact] public void InstallFiles_LegacyLocked_StillSucceeds()
+        {
+            using (var t = new TempDir())
+            {
+                var from = t.Sub(@"dl\Peressylkin.exe"); System.IO.Directory.CreateDirectory(t.Sub("dl")); System.IO.File.WriteAllText(from, "new");
+                var dir = t.Sub("inst"); System.IO.Directory.CreateDirectory(dir);
+                var legacy = System.IO.Path.Combine(dir, "Sibir.exe");
+                System.IO.File.WriteAllText(legacy, "old");
+                using (System.IO.File.Open(legacy, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.None))
+                    Assert.Equal(System.IO.Path.Combine(dir, "Peressylkin.exe"), ShellIntegration.InstallFiles(from, dir));
+            }
+        }
+
+        [Fact] public void InstalledExe_IsPeressylkin() =>
+            Assert.Equal("Peressylkin.exe", System.IO.Path.GetFileName(ShellIntegration.InstalledExe));
+
         [Fact] public void Collector_ThreeCallers_OneGetsAll()
         {
             var verb = "test" + Guid.NewGuid().ToString("N").Substring(0, 6);

@@ -13,6 +13,6 @@ if (-not $NoTests) {
   if ($code) { exit 1 }
 }
 New-Item -ItemType Directory -Force out | Out-Null
-Copy-Item src\Sibir\bin\Release\net48\Sibir.exe out\ -Force
+Copy-Item src\Sibir\bin\Release\net48\Peressylkin.exe out\ -Force
 Get-ChildItem assets\*.ico -EA SilentlyContinue | Copy-Item -Destination out\ -Force
-'OK: out\Sibir.exe'
+'OK: out\Peressylkin.exe'

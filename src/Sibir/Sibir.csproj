@@ -5,9 +5,9 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
-    <AssemblyName>Sibir</AssemblyName>
-    <Version>1.0.0</Version>
-    <Product>Ссылка в Сибирь</Product>
+    <AssemblyName>Peressylkin</AssemblyName>
+    <Version>1.1.0</Version>
+    <Product>Перессылкин — Ссылка в Сибирь</Product>
     <Description>Перенос папок на другой диск с сохранением путей (junction)</Description>
     <RootNamespace>Sibir</RootNamespace>
     <ApplicationIcon Condition="Exists('..\..\assets\sibir.ico')">..\..\assets\sibir.ico</ApplicationIcon>

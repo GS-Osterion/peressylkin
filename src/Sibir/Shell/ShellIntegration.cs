@@ -15,7 +15,8 @@ namespace Sibir.Shell
         };
 
         public static string InstallDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sibir");
-        public static string InstalledExe => Path.Combine(InstallDir, "Sibir.exe");
+        public const string ExeName = "Peressylkin.exe";
+        public static string InstalledExe => Path.Combine(InstallDir, ExeName);
 
         public static RegistryKey UserClasses() => Registry.CurrentUser.CreateSubKey(@"Software\Classes");
 
@@ -45,20 +46,28 @@ namespace Sibir.Shell
             using (var k = classesRoot.OpenSubKey(@"Directory\shell\SibirExile")) return k != null;
         }
 
-        /// <summary>Copies the running exe and its icons into InstallDir. Returns the installed exe path.</summary>
-        public static string InstallFiles(string fromExe)
+        /// <summary>Exe name of version 1.0.0; removed on install.</summary>
+        public const string LegacyExe = "Sibir.exe";
+
+        /// <summary>Copies the running exe and its icons into the install dir, removes the legacy exe. Returns the installed exe path.</summary>
+        public static string InstallFiles(string fromExe, string installDir = null)
         {
-            Directory.CreateDirectory(InstallDir);
+            installDir = installDir ?? InstallDir;
+            var target = Path.Combine(installDir, ExeName);
+            Directory.CreateDirectory(installDir);
             var dir = Path.GetDirectoryName(fromExe);
-            if (!string.Equals(Path.GetFullPath(fromExe), Path.GetFullPath(InstalledExe), StringComparison.OrdinalIgnoreCase))
-                File.Copy(fromExe, InstalledExe, true);
+            if (!string.Equals(Path.GetFullPath(fromExe), Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase))
+                File.Copy(fromExe, target, true);
             foreach (var ico in new[] { "stamp.ico", "sibir.ico" })
             {
                 var src = Path.Combine(dir, ico);
-                if (File.Exists(src) && !string.Equals(dir, InstallDir, StringComparison.OrdinalIgnoreCase))
-                    File.Copy(src, Path.Combine(InstallDir, ico), true);
+                if (File.Exists(src) && !string.Equals(dir, installDir, StringComparison.OrdinalIgnoreCase))
+                    File.Copy(src, Path.Combine(installDir, ico), true);
             }
-            return InstalledExe;
+            try { File.Delete(Path.Combine(installDir, LegacyExe)); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            return target;
         }
     }
 }
