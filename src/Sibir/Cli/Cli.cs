@@ -46,7 +46,7 @@ namespace Sibir.Cli
         public static readonly string[] Reasons =
         {
             "ok", "already_exiled", "in_siberia", "peressylkin_property", "case_open", "target_is_source", "capital", "regime_city", "protected", "same_drive",
-            "network_target", "no_space", "removable_target", "launcher", "store_app", "registered_app", "nested", "target_exists",
+            "network_target", "network_source", "no_space", "removable_target", "launcher", "store_app", "registered_app", "nested", "target_exists",
             "locked", "needs_admin", "copy_failed", "verify_failed", "not_exiled", "no_destination", "bad_args", "not_found", "cancelled",
         };
 
@@ -160,6 +160,7 @@ namespace Sibir.Cli
             var mover = NewMover(a, ctx);
             foreach (var p in a.Paths)
             {
+                if (AbroadRow(p, ctx, w)) { code = Math.Max(code, ExitCodes.Refused); continue; }
                 if (!doIt)
                 {
                     var rec = ctx.Archive.FindExiled(p);
@@ -177,6 +178,7 @@ namespace Sibir.Cli
             int code = 0;
             foreach (var p in a.Paths)
             {
+                if (AbroadRow(p, ctx, w)) { code = ExitCodes.Refused; continue; }
                 var rec = ctx.Archive.FindExiled(p);
                 if (rec == null) { w.Result(p, "refused", "not_exiled", Strings.NotExiled); code = ExitCodes.Refused; continue; }
                 var row = Row(rec.Source, "exiled", "ok", Junction.IsReparsePoint(rec.Source) ? "Спецпоселенец" : Strings.CaseOpen, rec.Target, rec.Bytes);
@@ -213,6 +215,14 @@ namespace Sibir.Cli
 
         private static Mover NewMover(Args a, CliContext ctx) =>
             new Mover(ctx.Archive, new MoverOptions { Strict = a.Has("--strict"), Stamp = !a.Has("--no-stamp"), StampIconPath = ctx.StampIconPath }, ctx.Hook);
+
+        private static bool AbroadRow(string p, CliContext ctx, Out w)
+        {
+            var reason = Abroad.ReasonFor(p, ctx.Drives);
+            if (reason == null) return false;
+            w.Result(p, "refused", reason, Strings.Abroad);
+            return true;
+        }
 
         private static int UnfinishedRow(CliContext ctx, Out w)
         {

@@ -81,6 +81,7 @@ namespace Sibir.Core
                 results.Add(r);
                 void Refuse(string reason, string message) { r.Verdict = Verdict.Refused; r.Reason = reason; r.Message = message; }
 
+                if (env.IsNetworkPath(src)) { Refuse("network_source", Strings.Abroad); continue; }   // abroad: never touch it
                 if (!Directory.Exists(LongPath.Ex(src)) && !Junction.IsReparsePoint(src)) { Refuse("not_found", "Гражданин не найден по указанному адресу"); continue; }
                 if (normalized.Any(o => !LongPath.Same(o, src) && LongPath.SameOrUnder(src, o))) { Refuse("nested", Strings.Nested); continue; }
                 if (IsProtected(src)) { Refuse("protected", Strings.Protected); continue; }
@@ -90,7 +91,7 @@ namespace Sibir.Core
                 if (exiled.Any(e => LongPath.SameOrUnder(src, e.Target)) || LongPath.SameOrUnder(src, rootN)) { Refuse("in_siberia", Strings.InSiberia); continue; }
                 if (exiled.Any(e => LongPath.SameOrUnder(e.Target, src))) { Refuse("peressylkin_property", Strings.Property); continue; }   // a Siberia (even 1.0.0, no plaque) holding exiled folders
                 if (LongPath.SameOrUnder(rootN, src)) { Refuse("target_is_source", Strings.TargetIsSource); continue; }
-                if (env.IsNetworkPath(rootN)) { Refuse("network_target", Strings.NetworkTarget); continue; }
+                if (env.IsNetworkPath(rootN)) { Refuse("network_target", Strings.Abroad); continue; }
                 if (string.Equals(env.VolumeIdOf(src), rootVol, StringComparison.OrdinalIgnoreCase)) { Refuse("same_drive", Strings.SameDrive); continue; }
                 if (Destination.IsForbidden(rootN, settings, env, out var fr, out var fm)) { Refuse(fr, fm); continue; }
 

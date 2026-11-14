@@ -17,8 +17,8 @@ namespace Sibir.Tests
 
         public CliTests()
         {
-            var env = new FakeEnv().Drive(@"C:\", "volC", 100).Drive(@"T:\", "volT", 100).Drive(@"D:\", "volD", 100);
-            env.Map(_t.Sub("c"), "volC").Map(_t.Sub("t"), "volT").Map(_t.Sub("d"), "volD");
+            var env = new FakeEnv().Drive(@"C:\", "volC", 100).Drive(@"T:\", "volT", 100).Drive(@"D:\", "volD", 100).Drive(@"N:\", "volN", 100, network: true);
+            env.Map(_t.Sub("c"), "volC").Map(_t.Sub("t"), "volT").Map(_t.Sub("d"), "volD").Map(_t.Sub("n"), "volN");
             _ctx = new CliContext { Archive = new Archive(_t.Sub(@"arch\archive.jsonl")), Drives = env, Launchers = new FakeLaunchers(), SettingsPath = _t.Sub("settings.json") };
             _root = _t.Sub(@"t\Сибирь");
         }
@@ -35,6 +35,18 @@ namespace Sibir.Tests
             var rows = o.ToString().Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(l => js.Deserialize<Dictionary<string, object>>(l)).ToList();
             return (code, rows, e.ToString());
+        }
+
+        [Fact] public void RehabAndStatus_NetworkPath_Abroad()
+        {
+            var p = Src(@"n\A");
+            foreach (var args in new[] { new[] { "rehab", p, "--yes", "--json" }, new[] { "rehab", p, "--json" }, new[] { "status", p, "--json" } })
+            {
+                var (code, rows, _) = Run(args);
+                Assert.Equal(2, code);
+                Assert.Equal("network_source", rows[0]["reason"]);
+                Assert.Equal(Strings.Abroad, rows[0]["message"]);
+            }
         }
 
         [Fact] public void Check_Json_OneLinePerPath()
@@ -173,7 +185,7 @@ namespace Sibir.Tests
             var o = new StringWriter();
             Assert.Equal(0, Sibir.Cli.Cli.Run(new[] { "schema" }, o, new StringWriter(), _ctx));
             var s = o.ToString();
-            foreach (var r in "already_exiled in_siberia case_open target_is_source capital regime_city protected same_drive network_target no_space removable_target launcher store_app registered_app nested target_exists locked needs_admin copy_failed verify_failed not_exiled no_destination bad_args not_found cancelled".Split(' '))
+            foreach (var r in "already_exiled in_siberia case_open target_is_source capital regime_city protected same_drive network_target network_source no_space removable_target launcher store_app registered_app nested target_exists locked needs_admin copy_failed verify_failed not_exiled no_destination bad_args not_found cancelled".Split(' '))
                 Assert.Contains("\"" + r + "\"", s);
             foreach (var c in new[] { "\"0\"", "\"1\"", "\"2\"", "\"3\"", "\"4\"", "\"5\"", "\"6\"" }) Assert.Contains(c, s);
         }

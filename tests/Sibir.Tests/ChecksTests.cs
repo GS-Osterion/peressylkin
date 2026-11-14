@@ -151,6 +151,8 @@ namespace Sibir.Tests
         }
 
         [Fact] public void NetworkTarget() => Is(One(Src(@"c\A"), root: _t.Sub(@"n\Сибирь")), Verdict.Refused, "network_target");
+        [Fact] public void NetworkTarget_AbroadText() => Assert.Equal(Strings.Abroad, One(Src(@"c\A"), root: _t.Sub(@"n\Сибирь")).Message);
+        [Fact] public void NetworkSource() => Is(One(Src(@"n\A")), Verdict.Refused, "network_source");
 
         [Fact] public void NoSpace()
         {

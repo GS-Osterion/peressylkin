@@ -54,6 +54,9 @@ namespace Sibir.Gui
 
         private static void Rehab(string[] paths)
         {
+            var abroad = paths.Where(p => Abroad.ReasonFor(p, Ctx.Drives) != null).ToList();
+            if (abroad.Count > 0) MessageBox.Show(string.Join("\n", abroad) + "\n\n" + Strings.Abroad, Strings.MenuRehab, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            paths = paths.Except(abroad).ToArray();
             var known = paths.Where(p => Ctx.Archive.FindExiled(p) != null).ToList();
             var unknown = paths.Except(known).ToList();
             if (unknown.Count > 0) MessageBox.Show(string.Join("\n", unknown) + "\n\n" + Strings.NotExiled, Strings.MenuRehab, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -65,6 +68,7 @@ namespace Sibir.Gui
 
         private static void ShowCase(string path)
         {
+            if (Abroad.ReasonFor(path, Ctx.Drives) != null) { MessageBox.Show(path + "\n\n" + Strings.Abroad, Strings.MenuCase); return; }
             var rec = Ctx.Archive.Current().LastOrDefault(r => LongPath.Same(r.Source, path) || LongPath.Same(r.Target, path));
             if (rec == null) { MessageBox.Show(path + "\n\n" + Strings.NotExiled, Strings.MenuCase); return; }
             var sb = new StringBuilder();
