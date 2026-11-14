@@ -37,6 +37,46 @@ namespace Sibir.Tests
             return (code, rows, e.ToString());
         }
 
+        /// <summary>Exile through the CLI, then classify it (as the GUI would).</summary>
+        private string ClassifiedLink()
+        {
+            var src = Src(@"c\Секрет");
+            Assert.Equal(0, Run("exile", src, "--to", _root, "--yes", "--json").code);
+            _ctx.Secret = new SecretArchive(_t.Sub(@"arch\.secret.jsonl"));
+            Assert.True(new Secrecy(_ctx.Archive, _ctx.Secret, new[] { _root }, null).Classify(_ctx.Archive.FindExiled(src)).Ok);
+            return src;
+        }
+
+        [Fact] public void StatusAndRehab_ClassifiedLink_NeedsAdmin_NoDetails()
+        {
+            if (SecretArchive.Elevated) Assert.Skip("run without administrator rights");
+            var src = ClassifiedLink();
+            foreach (var args in new[] { new[] { "status", src, "--json" }, new[] { "rehab", src, "--json" }, new[] { "rehab", src, "--yes", "--json" } })
+            {
+                var (code, rows, _) = Run(args);
+                Assert.Equal(5, code);
+                Assert.Equal("needs_admin", rows[0]["reason"]);
+                Assert.Null(rows[0]["target"]);
+                Assert.Equal(0, Convert.ToInt32(rows[0]["bytes"]));
+                Assert.Contains("засекречено", (string)rows[0]["message"]);
+            }
+            Assert.True(Junction.IsReparsePoint(src), "link untouched");
+        }
+
+        [Fact] public void List_HidesClassified()
+        {
+            if (SecretArchive.Elevated) Assert.Skip("run without administrator rights");
+            var src = ClassifiedLink();
+            Assert.False(Run("list", "--json").rows.Any(r => (string)r["path"] == src));
+        }
+
+        [Fact] public void Elevation_AsSid()
+        {
+            Assert.Equal("S-1-5-21-1", Shell.Elevation.AsSid(new[] { "--menu-rehab", @"C:\a", "--as", "S-1-5-21-1" }));
+            Assert.Null(Shell.Elevation.AsSid(new[] { "--menu-rehab", @"C:\a" }));
+            Assert.Equal(2, Shell.Elevation.Strip(new[] { "--menu-rehab", @"C:\a", "--as", "S-1" }).Length);
+        }
+
         [Fact] public void RehabAndStatus_NetworkPath_Abroad()
         {
             var p = Src(@"n\A");

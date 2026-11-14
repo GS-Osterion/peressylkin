@@ -25,13 +25,18 @@ namespace Sibir.Cli
         public string SettingsPath { get; set; }
         public string StampIconPath { get; set; }
         public IFaultHook Hook { get; set; }
+        public SecretArchive Secret { get; set; }
+        /// <summary>Only an elevated process reads the secret archive.</summary>
+        public bool SecretReadable => Secret != null && SecretArchive.Elevated;
+        public IReadOnlyList<ArchiveRecord> Unfinished() =>
+            SecretReadable ? Archive.Unfinished().Concat(Secret.Unfinished()).ToList() : Archive.Unfinished();
 
         public static CliContext Real()
         {
             var icon = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sibir", "stamp.ico");
             return new CliContext
             {
-                Archive = new Archive(Archive.DefaultPath), Drives = new RealDriveEnv(), Launchers = new RealLauncherEnv(),
+                Archive = new Archive(Archive.DefaultPath), Secret = new SecretArchive(SecretArchive.DefaultPath), Drives = new RealDriveEnv(), Launchers = new RealLauncherEnv(),
                 SettingsPath = Settings.DefaultPath, StampIconPath = File.Exists(icon) ? icon : null,
             };
         }
@@ -123,7 +128,7 @@ namespace Sibir.Cli
 
         private static int Exile(Args a, CliContext ctx, Out w, TextWriter err, bool doIt)
         {
-            if (doIt && ctx.Archive.Unfinished().Count > 0) return UnfinishedRow(ctx, w);
+            if (doIt && ctx.Unfinished().Count > 0) return UnfinishedRow(ctx, w);
             var settings = Settings.Load(ctx.SettingsPath);
             if (a.Has("--allow-capital")) settings.ProtectCapital = false;
             var root = a.To ?? Destination.DefaultRoot(a.Paths[0], settings, ctx.Drives);
@@ -155,15 +160,16 @@ namespace Sibir.Cli
         private static int Rehab(Args a, CliContext ctx, Out w, TextWriter err)
         {
             bool doIt = a.Has("--yes");
-            if (doIt && ctx.Archive.Unfinished().Count > 0) return UnfinishedRow(ctx, w);
+            if (doIt && ctx.Unfinished().Count > 0) return UnfinishedRow(ctx, w);
             int code = 0;
             var mover = NewMover(a, ctx);
             foreach (var p in a.Paths)
             {
                 if (AbroadRow(p, ctx, w)) { code = Math.Max(code, ExitCodes.Refused); continue; }
+                if (ClassifiedRow(p, ctx, w)) { code = Math.Max(code, ExitCodes.NeedsAdmin); continue; }
                 if (!doIt)
                 {
-                    var rec = ctx.Archive.FindExiled(p);
+                    var rec = ctx.Archive.FindExiled(p) ?? (ctx.SecretReadable ? ctx.Secret.FindExiled(p) : null);
                     if (rec == null) { w.Result(p, "refused", "not_exiled", Strings.NotExiled); code = Math.Max(code, ExitCodes.Refused); }
                     else w.Result(p, "ok", "ok", "Готов к реабилитации", rec.Target, rec.Bytes);
                     continue;
@@ -178,7 +184,8 @@ namespace Sibir.Cli
             int code = 0;
             foreach (var p in a.Paths)
             {
-                if (AbroadRow(p, ctx, w)) { code = ExitCodes.Refused; continue; }
+                if (AbroadRow(p, ctx, w)) { code = Math.Max(code, ExitCodes.Refused); continue; }
+                if (ClassifiedRow(p, ctx, w)) { code = Math.Max(code, ExitCodes.NeedsAdmin); continue; }
                 var rec = ctx.Archive.FindExiled(p);
                 if (rec == null) { w.Result(p, "refused", "not_exiled", Strings.NotExiled); code = ExitCodes.Refused; continue; }
                 var row = Row(rec.Source, "exiled", "ok", Junction.IsReparsePoint(rec.Source) ? "Спецпоселенец" : Strings.CaseOpen, rec.Target, rec.Bytes);
@@ -199,8 +206,8 @@ namespace Sibir.Cli
         {
             if (!a.Has("--yes"))
             {
-                foreach (var r in ctx.Archive.Unfinished()) w.Result(r.Source, "unfinished", r.Status, Strings.Recover, r.Target, r.Bytes);
-                return ctx.Archive.Unfinished().Count > 0 ? ExitCodes.Unfinished : 0;
+                foreach (var r in ctx.Unfinished()) w.Result(r.Source, "unfinished", r.Status, Strings.Recover, r.Target, r.Bytes);
+                return ctx.Unfinished().Count > 0 ? ExitCodes.Unfinished : 0;
             }
             int code = 0;
             foreach (var r in NewMover(a, ctx).Recover())
@@ -214,7 +221,17 @@ namespace Sibir.Cli
         // ---------- helpers ----------
 
         private static Mover NewMover(Args a, CliContext ctx) =>
-            new Mover(ctx.Archive, new MoverOptions { Strict = a.Has("--strict"), Stamp = !a.Has("--no-stamp"), StampIconPath = ctx.StampIconPath }, ctx.Hook);
+            new Mover(ctx.Archive, new MoverOptions { Strict = a.Has("--strict"), Stamp = !a.Has("--no-stamp"), StampIconPath = ctx.StampIconPath }, ctx.Hook, ctx.SecretReadable ? ctx.Secret : null);
+
+        /// <summary>A classified case without rights: say only "needs administrator", reveal nothing.</summary>
+        private static bool ClassifiedRow(string p, CliContext ctx, Out w)
+        {
+            if (ctx.SecretReadable || !Secrecy.IsClassifiedLink(p, ctx.Archive)) return false;
+            w.Result(p, "refused", "needs_admin", Strings.Classified + AskAdmin);
+            return true;
+        }
+
+        private static string AskAdmin => ". Попросите человека выполнить: Start-Process '" + System.Reflection.Assembly.GetEntryAssembly()?.Location + "' -Verb RunAs";
 
         private static bool AbroadRow(string p, CliContext ctx, Out w)
         {
@@ -226,7 +243,7 @@ namespace Sibir.Cli
 
         private static int UnfinishedRow(CliContext ctx, Out w)
         {
-            foreach (var r in ctx.Archive.Unfinished())
+            foreach (var r in ctx.Unfinished())
                 w.Result(r.Source, "refused", "unfinished", Strings.Recover + ": есть незакрытое дело. Peressylkin.exe recover --yes", r.Target, r.Bytes);
             return ExitCodes.Unfinished;
         }
