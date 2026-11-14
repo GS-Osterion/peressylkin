@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -61,11 +62,19 @@ namespace Sibir.Core
         public void EnsureAcl()
         {
             if (!Elevated || !File.Exists(FilePath)) return;
-            var want = SecretAcl();
-            var have = File.GetAccessControl(FilePath, AccessControlSections.Access);
-            if (have.GetSecurityDescriptorSddlForm(AccessControlSections.Access) != want.GetSecurityDescriptorSddlForm(AccessControlSections.Access))
-                File.SetAccessControl(FilePath, want);
+            if (!HasSecretAcl(FilePath)) File.SetAccessControl(FilePath, SecretAcl());
             File.SetAttributes(FilePath, File.GetAttributes(FilePath) | FileAttributes.Hidden);
+        }
+
+        /// <summary>Administrator: the file's DACL is protected and holds exactly the secret rules.
+        /// Compares rules, not SDDL: Windows adds the auto-inherited flag ("PAI") on set.</summary>
+        public static bool HasSecretAcl(string path)
+        {
+            var have = File.GetAccessControl(path, AccessControlSections.Access);
+            if (!have.AreAccessRulesProtected) return false;
+            string Key(FileSystemAccessRule r) => r.IdentityReference.Value + "|" + (int)r.FileSystemRights + "|" + r.AccessControlType + "|" + r.InheritanceFlags + "|" + r.IsInherited;
+            var rules = new Func<FileSecurity, string[]>(s => s.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().Select(Key).OrderBy(k => k).ToArray());
+            return rules(have).SequenceEqual(rules(SecretAcl()));
         }
 
         public override IReadOnlyList<ArchiveRecord> Current()

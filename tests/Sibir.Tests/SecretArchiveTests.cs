@@ -66,8 +66,7 @@ namespace Sibir.Tests
             File.WriteAllText(_path + ".~tmp", "planted");   // readable temp planted by a normal process
             _s.Remove(new System.Collections.Generic.HashSet<string> { "1" });
             Assert.False(File.Exists(_path + ".~tmp"));
-            Assert.Equal(SecretArchive.SecretAcl().GetSecurityDescriptorSddlForm(System.Security.AccessControl.AccessControlSections.Access),
-                File.GetAccessControl(_path).GetSecurityDescriptorSddlForm(System.Security.AccessControl.AccessControlSections.Access));
+            Assert.True(SecretArchive.HasSecretAcl(_path), "secret ACL");
         }
 
         [Fact] public void NoFile_NotCompromised() { NeedNormal(); Assert.False(_s.IsCompromised()); }
@@ -95,9 +94,9 @@ namespace Sibir.Tests
             NeedAdmin();
             Directory.CreateDirectory(Path.GetDirectoryName(_path));
             File.WriteAllText(_path, "");
+            Assert.False(SecretArchive.HasSecretAcl(_path), "plain file is not secret");
             _s.EnsureAcl();
-            var want = SecretArchive.SecretAcl().GetSecurityDescriptorSddlForm(System.Security.AccessControl.AccessControlSections.Access);
-            Assert.Equal(want, File.GetAccessControl(_path).GetSecurityDescriptorSddlForm(System.Security.AccessControl.AccessControlSections.Access));
+            Assert.True(SecretArchive.HasSecretAcl(_path), "secret ACL");
         }
     }
 }
