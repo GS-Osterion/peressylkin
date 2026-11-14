@@ -9,6 +9,36 @@ verified and the junction works.
 
 Windows 10/11. No dependencies, no administrator rights.
 
+> **The code is written by AI.** Peressylkin is developed with an AI coding agent (Claude Code):
+> the agent writes the code, tests and docs; a human sets the goals, makes the decisions and
+> tests the releases on a real machine. Review it as you would any third-party code.
+
+## What it is for
+
+Drive C: is full, but the space is taken by things you can't just move: game saves, caches,
+program data in `AppData`, folders that programs expect at a fixed path. Moving them by hand
+breaks the programs. Peressylkin moves such a folder to a roomier drive and leaves a junction
+behind, so for every program the folder is still where it was.
+
+## Features
+
+- **Exile** ("Сослать в Сибирь…" in the Explorer menu): copy → verify against the original →
+  swap in a junction → delete the original. Several folders at once, with progress.
+- **Rehabilitate**: move the folder back and remove the junction.
+- **Never loses data**: any failure rolls everything back ("Амнистия"); an interrupted run is
+  finished or rolled back on the next start ("Доследование", `recover`).
+- **Pre-flight checks** with plain reasons: system and protected folders, Store apps,
+  folders managed by Steam/Epic/GOG (move those with the launcher), folders held by a running
+  program (it names the process), not enough space, same drive, removable or network drives.
+- **Case archive** («Архив. Хранить вечно»): where every folder went, when, how big — and
+  «Личное дело» for one folder from the Explorer menu.
+- **Classify and burn** (1.2): hide a case in a secret archive readable only by an
+  administrator; erase the record of a rehabilitated folder without a trace.
+- **Red stamp** on exiled folders in Explorer; "capital" and "regime cities" — drives you
+  don't want to exile to.
+- **Console mode for AI agents and scripts** with JSON output (below).
+- Built-in self-test («Полигон»).
+
 Comrade Peressylkin exiles folders to Siberia — hence the theme, and hence the historical
 names that stay on purpose: the case archive lives in `%LOCALAPPDATA%\Sibir`, exiled folders in
 `X:\Сибирь`.
