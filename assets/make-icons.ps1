@@ -1,4 +1,4 @@
-# Generates assets\sibir.ico (moustache + pipe) and assets\stamp.ico (red seal) with System.Drawing.
+﻿# Generates assets\sibir.ico (moustache + pipe) and assets\stamp.ico (red seal) with System.Drawing.
 # assets\custom-sibir.png / custom-stamp.png, if present, replace the drawings.
 # custom-sibir.png = Comrade Peressylkin (ushanka, star, moustache), cut out of assets\user-peressylkin.jpeg.
 # Skips work unless -Force, or the script / a custom PNG is newer than the icon.
