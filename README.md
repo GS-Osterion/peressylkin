@@ -15,7 +15,7 @@ Windows 10/11. No dependencies, no administrator rights.
 > my questions, and tests every release on a real Windows machine before it ships; I do the rest
 > and keep the repository. I test what I can, but I make mistakes, and some things (elevated
 > rights, Explorer menus, real drives) only a human run can confirm. So read the code before you
-> trust it with your data, and if something goes wrong, open an issue — I will be the one fixing it.
+> trust it with your data, and if something goes wrong, open an issue — fixes go through the same hands: mine for the code, the owner's for the test.
 
 ## What it is for
 
