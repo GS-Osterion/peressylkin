@@ -44,6 +44,32 @@ namespace Sibir.Tests
             Assert.True(_s.IsCompromised());
         }
 
+        [Fact] public void PlantedFileWithWriteDac_IsCompromised()
+        {
+            NeedNormal();
+            Directory.CreateDirectory(Path.GetDirectoryName(_path));
+            File.WriteAllText(_path, "");
+            var sec = new System.Security.AccessControl.FileSecurity();
+            sec.SetAccessRuleProtection(true, false);
+            var me = System.Security.Principal.WindowsIdentity.GetCurrent().User;
+            var rights = System.Security.AccessControl.FileSystemRights.AppendData | System.Security.AccessControl.FileSystemRights.Synchronize | System.Security.AccessControl.FileSystemRights.ChangePermissions;
+            sec.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(me, rights, System.Security.AccessControl.AccessControlType.Allow));
+            sec.AddAccessRule(new System.Security.AccessControl.FileSystemAccessRule(new System.Security.Principal.SecurityIdentifier("S-1-3-4"), rights, System.Security.AccessControl.AccessControlType.Allow));
+            File.SetAccessControl(_path, sec);   // no read, no READ_CONTROL — but it can give itself read later
+            Assert.True(_s.IsCompromised());
+        }
+
+        [Fact] public void Elevated_RemoveIgnoresPlantedTemp()
+        {
+            NeedAdmin();
+            _s.Write(Rec("1")); _s.Write(Rec("2"));
+            File.WriteAllText(_path + ".~tmp", "planted");   // readable temp planted by a normal process
+            _s.Remove(new System.Collections.Generic.HashSet<string> { "1" });
+            Assert.False(File.Exists(_path + ".~tmp"));
+            Assert.Equal(SecretArchive.SecretAcl().GetSecurityDescriptorSddlForm(System.Security.AccessControl.AccessControlSections.Access),
+                File.GetAccessControl(_path).GetSecurityDescriptorSddlForm(System.Security.AccessControl.AccessControlSections.Access));
+        }
+
         [Fact] public void NoFile_NotCompromised() { NeedNormal(); Assert.False(_s.IsCompromised()); }
 
         [Fact] public void NotElevated_CurrentThrows()

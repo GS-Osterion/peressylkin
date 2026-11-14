@@ -75,6 +75,15 @@ namespace Sibir.Tests
             Assert.Empty(_pub.Current());
         }
 
+        [Fact] public void Classify_StaleRow_CaseNowRehabilitating_NotAllowed()
+        {
+            var snapshot = Exiled();                         // row in an open window
+            _pub.Write(snapshot.With("rehabilitating"));     // meanwhile Explorer started a rehab
+            Assert.Equal("not_allowed", _sec.Classify(snapshot).Reason);
+            Assert.Equal("rehabilitating", _pub.Current().Single().Status);
+            Assert.False(SecretMark.Has(_tgt));
+        }
+
         [Fact] public void Classify_InTransit_NotAllowed()
         {
             var rec = Exiled().With("in_transit");

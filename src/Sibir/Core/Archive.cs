@@ -112,8 +112,18 @@ namespace Sibir.Core
                     kept.Append(line.TrimEnd(Cr)).Append(Nl);
                 }
                 var tmp = _path + ".~tmp";
-                WriteTemp(tmp, Utf8.GetBytes(kept.ToString()));
-                File.Replace(tmp, _path, null);
+                try
+                {
+                    WriteTemp(tmp, Utf8.GetBytes(kept.ToString()));
+                    File.Replace(tmp, _path, null);
+                }
+                catch
+                {
+                    // ReplaceFile may fail after removing the original (ERROR_UNABLE_TO_MOVE_REPLACEMENT): put the new content in place.
+                    if (!File.Exists(_path) && File.Exists(tmp)) File.Move(tmp, _path);
+                    else try { File.Delete(tmp); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                    throw;
+                }
             }
         }
 

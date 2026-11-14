@@ -50,7 +50,8 @@ namespace Sibir.Core
         public bool IsCompromised()
         {
             if (Elevated || !File.Exists(FilePath)) return false;
-            foreach (var access in new[] { NativeMethods.FILE_READ_DATA, NativeMethods.READ_CONTROL })
+            // Any of these lets the process read it now or grant itself read later.
+            foreach (var access in new[] { NativeMethods.FILE_READ_DATA, NativeMethods.READ_CONTROL, NativeMethods.WRITE_DAC, NativeMethods.WRITE_OWNER, NativeMethods.FILE_WRITE_DATA })
                 using (var h = NativeMethods.CreateFile(LongPath.Ex(FilePath), access, NativeMethods.FILE_SHARE_ALL, IntPtr.Zero, NativeMethods.OPEN_EXISTING, 0, IntPtr.Zero))
                     if (!h.IsInvalid) return true;
             return false;
@@ -82,7 +83,9 @@ namespace Sibir.Core
 
         protected override void WriteTemp(string tmp, byte[] content)
         {
-            using (var h = Open(tmp, NativeMethods.GENERIC_WRITE, NativeMethods.CREATE_ALWAYS))
+            // A temp planted by a normal process keeps its own ACL under CREATE_ALWAYS: delete it, then create strictly new.
+            NativeMethods.DeleteFile(LongPath.Ex(tmp));
+            using (var h = Open(tmp, NativeMethods.GENERIC_WRITE, NativeMethods.CREATE_NEW))
                 if (!NativeMethods.WriteFile(h, content, content.Length, out _, IntPtr.Zero)) throw new Win32Exception(Marshal.GetLastWin32Error());
         }
 

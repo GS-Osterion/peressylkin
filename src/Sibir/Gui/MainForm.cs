@@ -95,7 +95,19 @@ namespace Sibir.Gui
                 _settings.SecretWarned = true;
                 _settings.Save(GuiApp.Ctx.SettingsPath);
             }
-            Report(sel.Select(r => NewSecrecy().Classify(r)));
+            var secrecy = NewSecrecy();
+            var results = sel.Select(r =>
+            {
+                try
+                {
+                    var res = secrecy.Classify(r);
+                    if (res.Ok && r.Status == "exiled") _settings.AddRoot(secrecy.RootOf(r));   // the root mark must be found by later checks
+                    return res;
+                }
+                catch (Exception e) { return new MoveResult { Source = r.Source, Ok = false, Reason = "copy_failed", Message = e.Message }; }
+            }).ToList();
+            _settings.Save(GuiApp.Ctx.SettingsPath);
+            Report(results);
         }
 
         private void Burn()

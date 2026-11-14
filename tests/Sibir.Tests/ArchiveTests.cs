@@ -110,6 +110,15 @@ namespace Sibir.Tests
         }
 
         [Fact]
+        public void Settings_Load_MigratesLastRootIntoSiberiaRoots()
+        {
+            using var t = new TempDir();
+            var p = t.Sub("settings.json");
+            File.WriteAllText(p, "{\"LastRoot\":\"E:\\\\Stuff\\\\Сибирь\"}");
+            Assert.Contains(@"E:\Stuff\Сибирь", Settings.Load(p).SiberiaRoots);
+        }
+
+        [Fact]
         public void Archive_StampRemoved_RoundTrips()
         {
             using var t = new TempDir();

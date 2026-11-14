@@ -27,6 +27,17 @@ namespace Sibir.Core
         /// <summary>Any user. Order: unstamp → secret line → marks → erase from the public archive. Repeating is idempotent.</summary>
         public MoveResult Classify(ArchiveRecord rec)
         {
+            using (ArchiveLock.Take())   // re-entrant: the writes below take it again
+            {
+                // The row may be stale (an open window): act only on the case as it is now.
+                var now = _pub.Current().FirstOrDefault(r => r.Id == rec.Id);
+                if (now == null || now.Status != rec.Status) return Res(rec, false, "not_allowed", "Дело изменилось — обновите таблицу");
+                return ClassifyLocked(now);
+            }
+        }
+
+        private MoveResult ClassifyLocked(ArchiveRecord rec)
+        {
             bool exiled = rec.Status == "exiled";
             if (!exiled && rec.Status != "rehabilitated") return Res(rec, false, "not_allowed", "Засекретить можно только сосланное или реабилитированное дело");
             if (_secret.IsCompromised()) return Res(rec, false, "safe_broken", Strings.SafeBroken);

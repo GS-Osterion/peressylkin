@@ -18,6 +18,7 @@ namespace Sibir.Native
         public static extern SafeFileHandle CreateFile(string name, uint access, uint share, IntPtr sa, uint disposition, uint flags, IntPtr template);
 
         public const uint FILE_READ_DATA = 0x1, FILE_APPEND_DATA = 0x4, READ_CONTROL = 0x20000, SYNCHRONIZE = 0x100000;
+        public const uint FILE_WRITE_DATA = 0x2, WRITE_DAC = 0x40000, WRITE_OWNER = 0x80000, CREATE_NEW = 1;
         public const uint CREATE_ALWAYS = 2, OPEN_ALWAYS = 4, FILE_ATTRIBUTE_HIDDEN = 0x2, FILE_ATTRIBUTE_NORMAL = 0x80;
         public const uint INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF, FILE_NAMED_STREAMS = 0x40000;
 

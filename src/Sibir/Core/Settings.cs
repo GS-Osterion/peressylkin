@@ -18,7 +18,16 @@ namespace Sibir.Core
         public void RememberRoot(string root)
         {
             LastRoot = Sibir.Native.LongPath.Normalize(root);
-            if (!SiberiaRoots.Exists(r => Sibir.Native.LongPath.Same(r, LastRoot))) SiberiaRoots.Add(LastRoot);
+            AddRoot(LastRoot);
+        }
+
+        /// <summary>Record a Siberia root without making it the default destination.</summary>
+        public void AddRoot(string root)
+        {
+            if (string.IsNullOrEmpty(root)) return;
+            string n;
+            try { n = Sibir.Native.LongPath.Normalize(root); } catch (System.ArgumentException) { return; }
+            if (!SiberiaRoots.Exists(r => Sibir.Native.LongPath.Same(r, n))) SiberiaRoots.Add(n);
         }
 
         public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sibir", "settings.json");
@@ -31,6 +40,7 @@ namespace Sibir.Core
                 if (s == null) return new Settings();
                 s.RegimeDrives = s.RegimeDrives ?? new List<string>();
                 s.SiberiaRoots = s.SiberiaRoots ?? new List<string>();
+                s.AddRoot(s.LastRoot);   // settings from 1.1: the last root was the only record of a Siberia
                 return s;
             }
             catch { return new Settings(); }
