@@ -43,9 +43,27 @@ namespace Sibir.Core
         /// <summary>Tests only: let a hook exception escape as if the process died.</summary>
         internal bool SimulateCrash { get; set; }
 
-        public Mover(Archive archive, MoverOptions opt, IFaultHook hook = null)
+        private readonly SecretArchive _secret;
+        private readonly HashSet<string> _secretIds = new HashSet<string>();
+
+        /// <param name="secret">Only from an elevated process: classified cases are rehabilitated and recovered from it.</param>
+        public Mover(Archive archive, MoverOptions opt, IFaultHook hook = null, SecretArchive secret = null)
         {
-            _archive = archive; _opt = opt; _hook = hook;
+            _archive = archive; _opt = opt; _hook = hook; _secret = secret;
+        }
+
+        /// <summary>Remember that this case lives in the secret archive: its progress must not leak into the public one.</summary>
+        private ArchiveRecord Secret(ArchiveRecord r)
+        {
+            if (r != null) _secretIds.Add(r.Id);
+            return r;
+        }
+
+        private void Save(ArchiveRecord r) => (_secretIds.Contains(r.Id) ? _secret : _archive).Write(r);
+
+        private void AfterSecretRehab(ArchiveRecord r)
+        {
+            if (_secretIds.Contains(r.Id)) new Secrecy(_archive, _secret, null, null).RefreshRoot(SecretMark.RootOf(r.Target, null));
         }
 
         private void At(Step s, string src) => _hook?.Before(s, src);
@@ -70,7 +88,7 @@ namespace Sibir.Core
             var m = Manifest.Build(src);
             res.Bytes = m.TotalBytes;
             var rec = new ArchiveRecord { Id = Guid.NewGuid().ToString("N"), Operation = "exile", Source = src, Target = tgt, Bytes = m.TotalBytes, Status = "in_transit", TimeUtc = DateTime.UtcNow };
-            _archive.Write(rec);
+            Save(rec);
             try
             {
                 At(Step.Copy, src);
@@ -99,7 +117,7 @@ namespace Sibir.Core
                 if (_opt.Stamp && _opt.StampIconPath != null && Stamp.Apply(src, tgt, _opt.StampIconPath))
                 {
                     rec.StampCreated = true;
-                    _archive.Write(rec.With("in_transit"));
+                    Save(rec.With("in_transit"));
                 }
 
                 At(Step.Control, src);
@@ -108,7 +126,7 @@ namespace Sibir.Core
 
                 At(Step.Cleanup, src);
                 Fs.DeleteTree(old);
-                _archive.Write(rec.With("exiled"));
+                Save(rec.With("exiled"));
                 res.Ok = true; res.Reason = "ok";
                 res.Message = string.Format(Strings.Done, Strings.Size(res.Bytes));
                 return res;
@@ -155,7 +173,7 @@ namespace Sibir.Core
             {
                 Fs.DeleteTree(staging);
                 Fs.DeleteTree(tgt);
-                _archive.Write(rec.With("amnestied"));
+                Save(rec.With("amnestied"));
             }
         }
 
@@ -165,7 +183,7 @@ namespace Sibir.Core
         {
             string src = LongPath.Normalize(link), back = src + BackSuffix;
             var res = new MoveResult { Source = src };
-            var rec = _archive.FindExiled(src);
+            var rec = _archive.FindExiled(src) ?? Secret(_secret?.FindExiled(src));
             if (rec == null) return Fail(res, "not_exiled", Strings.NotExiled);
             string tgt = rec.Target;
             res.Target = tgt;
@@ -189,7 +207,7 @@ namespace Sibir.Core
             if (resist != null) return resist;
 
             var r2 = rec.With("rehabilitating"); r2.Operation = "rehab";
-            _archive.Write(r2);
+            Save(r2);
             try
             {
                 At(Step.Copy, src);
@@ -204,7 +222,8 @@ namespace Sibir.Core
                 Directory.Move(LongPath.Ex(back), LongPath.Ex(src));
                 At(Step.Cleanup, src);
                 Fs.DeleteTree(tgt);
-                _archive.Write(r2.With("rehabilitated"));
+                Save(r2.With("rehabilitated"));
+                AfterSecretRehab(r2);
                 res.Ok = true; res.Reason = "ok"; res.Message = Strings.RehabDone;
                 return res;
             }
@@ -222,7 +241,7 @@ namespace Sibir.Core
             var back = src + BackSuffix;
             if (!Fs.DirExists(src) && Fs.DirExists(tgt)) Junction.Create(src, tgt);
             if (Junction.IsReparsePoint(src)) Fs.DeleteTree(back);
-            _archive.Write(rec.With("exiled"));
+            Save(rec.With("exiled"));
         }
 
         // ---------------- recovery ----------------
@@ -230,7 +249,7 @@ namespace Sibir.Core
         public List<MoveResult> Recover()
         {
             var results = new List<MoveResult>();
-            foreach (var rec in _archive.Unfinished())
+            foreach (var rec in _archive.Unfinished().Concat(_secret == null ? new List<ArchiveRecord>() : _secret.Unfinished().Select(Secret)).ToList())
             {
                 string src = rec.Source, tgt = rec.Target, old = src + OldSuffix, back = src + BackSuffix;
                 var res = new MoveResult { Source = src, Target = tgt, Bytes = rec.Bytes };
@@ -244,7 +263,7 @@ namespace Sibir.Core
                         if (complete)
                         {
                             Fs.DeleteTree(old);
-                            _archive.Write(rec.With("exiled"));
+                            Save(rec.With("exiled"));
                             res.Ok = true; res.Reason = "ok"; res.Message = string.Format(Strings.Done, Strings.Size(rec.Bytes));
                         }
                         else
@@ -258,7 +277,8 @@ namespace Sibir.Core
                         if (Fs.DirExists(src) && !Junction.IsReparsePoint(src) && !Fs.DirExists(back))
                         {
                             Fs.DeleteTree(tgt);
-                            _archive.Write(rec.With("rehabilitated"));
+                            Save(rec.With("rehabilitated"));
+                            AfterSecretRehab(rec);
                             res.Ok = true; res.Reason = "ok"; res.Message = Strings.RehabDone;
                         }
                         else

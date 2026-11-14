@@ -97,6 +97,38 @@ namespace Sibir.Tests
             Assert.Equal(1, Directory.GetFiles(Path.GetDirectoryName(_pub.FilePath)).Length, "no backup files: ");
         }
 
+        [Fact] public void NormalMover_ClassifiedLink_NotExiled()
+        {
+            NeedNormal();
+            _sec.Classify(Exiled());
+            Assert.Equal("not_exiled", M().Rehab(_src, null, CancellationToken.None).Reason);
+            Assert.True(Junction.IsReparsePoint(_src), "untouched");
+        }
+
+        [Fact] public void Rehab_SecretCase_ProgressStaysSecret()
+        {
+            if (!SecretArchive.Elevated) Assert.Skip("run as administrator");
+            Plaque.EnsureSiberia(_root);
+            _sec.Classify(Exiled());
+            var r = new Mover(_pub, new MoverOptions(), null, _secret).Rehab(_src, null, CancellationToken.None);
+            Assert.True(r.Ok, r.Message);
+            Assert.Empty(_pub.Current());
+            Assert.Equal("rehabilitated", _secret.Current().Single().Status);
+            Assert.False(SecretMark.Has(_root), "root mark cleared");
+        }
+
+        [Fact] public void Recover_SecretRehabilitating()
+        {
+            if (!SecretArchive.Elevated) Assert.Skip("run as administrator");
+            _sec.Classify(Exiled());
+            var crash = new Mover(_pub, new MoverOptions(), new Hook(Step.SwapLink, _ => throw new IOException("power cut")), _secret) { SimulateCrash = true };
+            try { crash.Rehab(_src, null, CancellationToken.None); } catch (IOException) { }
+            Assert.Equal("rehabilitating", _secret.Current().Single().Status);
+            new Mover(_pub, new MoverOptions(), null, _secret).Recover();
+            Assert.Equal("exiled", _secret.Current().Single().Status);
+            Assert.Empty(_pub.Current());
+        }
+
         [Fact] public void Declassify_RestoresStampAndPublicRecord()
         {
             if (!SecretArchive.Elevated) Assert.Skip("run as administrator");
