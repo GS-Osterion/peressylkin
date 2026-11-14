@@ -22,7 +22,9 @@ namespace Sibir.Core
         public static bool SupportsStreams(string dir)
         {
             var root = new StringBuilder(1024);
-            if (!NativeMethods.GetVolumePathName(LongPath.Normalize(dir), root, root.Capacity)) return false;
+            // Plain path first; the \\?\ form covers paths over MAX_PATH where long-path support is off.
+            if (!NativeMethods.GetVolumePathName(LongPath.Normalize(dir), root, root.Capacity) &&
+                !NativeMethods.GetVolumePathName(LongPath.Ex(dir), root, root.Capacity)) return false;
             return NativeMethods.GetVolumeInformation(root.ToString(), null, 0, out _, out _, out var flags, null, 0)
                 && (flags & NativeMethods.FILE_NAMED_STREAMS) != 0;
         }

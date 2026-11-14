@@ -1,37 +1,63 @@
 using System;
-using System.Security.AccessControl;
-using System.Security.Principal;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
+using Sibir.Native;
 
 namespace Sibir.Core
 {
-    /// <summary>One cross-process lock for every write to the case archives (append and rewrite).</summary>
+    /// <summary>
+    /// One lock for every write to the case archives (append and rewrite): an exclusive, delete-on-close lock file
+    /// next to them. Works across sessions (RDP, SSH, service) and between elevated and normal processes,
+    /// unlike a Local\ mutex, and needs no global-object privilege. Re-entrant per thread.
+    /// </summary>
     internal static class ArchiveLock
     {
-        private const string Name = @"Local\Sibir.Archive";
+        public const string FileName = ".lock";
+        public static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(1);
 
-        public static IDisposable Take()
+        [ThreadStatic] private static Dictionary<string, Held> _held;
+
+        public static IDisposable Take(string dir) => Take(dir, DefaultTimeout);
+
+        public static IDisposable Take(string dir, TimeSpan timeout)
         {
-            var sec = new MutexSecurity();
-            // An elevated creator's default DACL would lock normal processes out: grant the user explicitly.
-            sec.AddAccessRule(new MutexAccessRule(WindowsIdentity.GetCurrent().User, MutexRights.Synchronize | MutexRights.Modify, AccessControlType.Allow));
-            sec.AddAccessRule(new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), MutexRights.FullControl, AccessControlType.Allow));
-            Mutex m;
-            try { m = new Mutex(false, Name, out _, sec); }
-            catch (UnauthorizedAccessException) { m = Mutex.OpenExisting(Name, MutexRights.Synchronize | MutexRights.Modify); }
-            try { m.WaitOne(); }
-            catch (AbandonedMutexException) { }   // previous holder died: the lock is ours
-            return new Held(m);
+            var key = LongPath.Normalize(dir).ToUpperInvariant();
+            _held = _held ?? new Dictionary<string, Held>();
+            if (_held.TryGetValue(key, out var h)) { h.Depth++; return h; }
+
+            Directory.CreateDirectory(LongPath.Ex(dir));
+            var path = Path.Combine(dir, FileName);
+            var sw = Stopwatch.StartNew();
+            while (true)
+            {
+                try
+                {
+                    var fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose);
+                    h = new Held(key, fs);
+                    _held[key] = h;
+                    return h;
+                }
+                catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)   // held by someone, or being deleted
+                {
+                    if (sw.Elapsed >= timeout) throw new IOException("Архив занят другим процессом Перессылкина: " + dir, e);
+                }
+                Thread.Sleep(15);
+            }
         }
 
         private sealed class Held : IDisposable
         {
-            private Mutex _m;
-            public Held(Mutex m) { _m = m; }
+            private readonly string _key;
+            private FileStream _fs;
+            public int Depth = 1;
+            public Held(string key, FileStream fs) { _key = key; _fs = fs; }
             public void Dispose()
             {
-                if (_m == null) return;
-                _m.ReleaseMutex(); _m.Dispose(); _m = null;
+                if (_fs == null || --Depth > 0) return;
+                _held.Remove(_key);
+                _fs.Dispose(); _fs = null;
             }
         }
     }

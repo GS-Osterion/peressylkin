@@ -115,7 +115,11 @@ namespace Sibir.Gui
             var sel = Selected().Where(r => r.Status == "rehabilitated").ToList();
             if (sel.Count == 0) return;
             if (MessageBox.Show(this, string.Format(Strings.BurnConfirm, string.Join(", ", sel.Select(r => r.Source))), "Сжечь дело", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
-            Report(sel.Select(r => Secrecy.Burn(r, GuiApp.Ctx.Archive)));
+            Report(sel.Select(r =>
+            {
+                try { return Secrecy.Burn(r, GuiApp.Ctx.Archive); }
+                catch (Exception e) { return new MoveResult { Source = r.Source, Ok = false, Reason = "copy_failed", Message = e.Message }; }
+            }).ToList());
         }
 
         private void Report(System.Collections.Generic.IEnumerable<MoveResult> results)

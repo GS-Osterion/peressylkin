@@ -27,6 +27,16 @@ namespace Sibir.Tests
 
         [Fact] public void SupportsStreams_TempIsNtfs() => Assert.True(SecretMark.SupportsStreams(_t.Path));
 
+        [Fact] public void SupportsStreams_LongPath()
+        {
+            var p = _t.Path;
+            while (p.Length < 300) p = Path.Combine(p, "очень-длинное-имя-папки");
+            Directory.CreateDirectory(@"\\?\" + p);
+            Assert.True(SecretMark.SupportsStreams(p));
+            SecretMark.Set(p);
+            Assert.True(SecretMark.Has(p));
+        }
+
         [Fact] public void RootOf_PrefersKnownRoot() =>
             Assert.Equal(@"E:\Data\Сибирь", SecretMark.RootOf(@"E:\Data\Сибирь\C\X", new[] { @"E:\Data", @"E:\Data\Сибирь" }));
 

@@ -110,6 +110,37 @@ namespace Sibir.Tests
         }
 
         [Fact]
+        public void Lock_ReentrantAndBlocksOthers()
+        {
+            using var t = new TempDir();
+            var held = new System.Threading.ManualResetEventSlim();
+            var release = new System.Threading.ManualResetEventSlim();
+            var holder = Task.Run(() =>
+            {
+                using (ArchiveLock.Take(t.Path))
+                using (ArchiveLock.Take(t.Path)) { held.Set(); release.Wait(); }   // re-entrant on one thread
+            });
+            held.Wait();
+            Assert.Throws<IOException>(() => ArchiveLock.Take(t.Path, TimeSpan.FromMilliseconds(200)).Dispose());
+            release.Set(); holder.Wait();
+            ArchiveLock.Take(t.Path, TimeSpan.FromSeconds(5)).Dispose();
+            Assert.Equal(0, Directory.GetFiles(t.Path).Length, "lock file left: ");
+        }
+
+        [Fact]
+        public void Remove_RefusedWhileOldVersionRuns()
+        {
+            using var t = new TempDir();
+            var a = new Archive(t.Sub("a.jsonl"));
+            a.Write(Rec("1", @"C:\a", "rehabilitated"));
+            var before = File.ReadAllText(a.FilePath);
+            Archive.OldWriterRunning = () => true;
+            try { Assert.Throws<InvalidOperationException>(() => a.Remove(new HashSet<string> { "1" })); }
+            finally { Archive.OldWriterRunning = null; }
+            Assert.Equal(before, File.ReadAllText(a.FilePath));
+        }
+
+        [Fact]
         public void Settings_Load_MigratesLastRootIntoSiberiaRoots()
         {
             using var t = new TempDir();

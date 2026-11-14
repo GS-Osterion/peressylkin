@@ -37,7 +37,7 @@ namespace Sibir.Core
 
         public override void Write(ArchiveRecord r)
         {
-            using (ArchiveLock.Take())
+            using (ArchiveLock.Take(Path.GetDirectoryName(FilePath)))
             {
                 if (Elevated && File.Exists(FilePath)) { EnsureAcl(); AppendLine(r); return; }
                 var line = Utf8.GetBytes("\n" + Json.Serialize(r) + "\n");   // cannot read the tail: always start a fresh line

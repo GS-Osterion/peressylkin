@@ -51,7 +51,11 @@ namespace Sibir.Gui
 
         private void Each(Func<ArchiveRecord, MoveResult> act, System.Collections.Generic.IEnumerable<ArchiveRecord> recs = null)
         {
-            var errors = (recs ?? Selected()).Select(act).Where(r => !r.Ok).Select(r => r.Source + ": " + r.Message).ToList();
+            var errors = (recs ?? Selected()).Select(r =>
+            {
+                try { return act(r); }
+                catch (Exception e) { return new MoveResult { Source = r.Source, Ok = false, Message = e.Message }; }
+            }).Where(r => !r.Ok).Select(r => r.Source + ": " + r.Message).ToList();
             if (errors.Count > 0) MessageBox.Show(this, string.Join("\n", errors), Text);
             Reload();
         }

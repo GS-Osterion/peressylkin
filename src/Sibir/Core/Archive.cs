@@ -47,7 +47,7 @@ namespace Sibir.Core
 
         public virtual void Write(ArchiveRecord r)
         {
-            using (ArchiveLock.Take()) AppendLine(r);
+            using (ArchiveLock.Take(Path.GetDirectoryName(FilePath))) AppendLine(r);
         }
 
         /// <summary>Plain append; caller holds <see cref="ArchiveLock"/>.</summary>
@@ -93,10 +93,36 @@ namespace Sibir.Core
             return order.Select(i => map[i]).ToList();
         }
 
+        /// <summary>Tests only: replaces the process scan.</summary>
+        internal static Func<bool> OldWriterRunning;
+
+        /// <summary>Another Peressylkin older than 1.2 (or 1.0's Sibir.exe) is running. Unknown version → not old.</summary>
+        private static bool RealOldWriterRunning()
+        {
+            var me = System.Diagnostics.Process.GetCurrentProcess().Id;
+            foreach (var name in new[] { "Peressylkin", "Sibir" })
+                foreach (var p in System.Diagnostics.Process.GetProcessesByName(name))
+                    using (p)
+                    {
+                        if (p.Id == me) continue;
+                        if (name == "Sibir") return true;
+                        try
+                        {
+                            var v = p.MainModule.FileVersionInfo;
+                            if (v.FileMajorPart == 1 && v.FileMinorPart < 2) return true;
+                        }
+                        catch (Exception) { }   // elevated or exited: cannot tell
+                    }
+            return false;
+        }
+
         /// <summary>Erase every line of these cases: rewrite via a temp file in the same folder, no backup.</summary>
         public virtual void Remove(ISet<string> ids)
         {
-            using (ArchiveLock.Take())
+            // Before 1.2 writers appended without the lock: a line written during the rewrite would be lost.
+            if ((OldWriterRunning ?? RealOldWriterRunning)())
+                throw new InvalidOperationException("Закройте старую версию Перессылкина (до 1.2): она пишет в архив без замка");
+            using (ArchiveLock.Take(Path.GetDirectoryName(FilePath)))
             {
                 if (!File.Exists(_path)) return;
                 string text;

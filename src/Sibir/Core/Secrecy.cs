@@ -27,7 +27,7 @@ namespace Sibir.Core
         /// <summary>Any user. Order: unstamp → secret line → marks → erase from the public archive. Repeating is idempotent.</summary>
         public MoveResult Classify(ArchiveRecord rec)
         {
-            using (ArchiveLock.Take())   // re-entrant: the writes below take it again
+            using (ArchiveLock.Take(System.IO.Path.GetDirectoryName(_pub.FilePath)))   // re-entrant: the writes below take it again
             {
                 // The row may be stale (an open window): act only on the case as it is now.
                 var now = _pub.Current().FirstOrDefault(r => r.Id == rec.Id);
