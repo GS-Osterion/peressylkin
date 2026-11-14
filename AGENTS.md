@@ -33,7 +33,7 @@ stderr (with `--json`): progress lines `{"progress":{"path","bytesDone","bytesTo
 ## Exit codes
 
 0 ok · 1 bad args · 2 refused by checks · 3 a process holds files (see `processes`; ask the user to close it)
-· 4 failed, rolled back (original untouched) · 5 needs administrator — never elevate yourself, give the
+· 4 failed, rolled back (original untouched) · 5 needs administrator (also: a classified case — no details given) — never elevate yourself, give the
 human the command from `message` · 6 unfinished cases — run `recover --yes` first.
 
 ## Notes
@@ -44,6 +44,7 @@ human the command from `message` · 6 unfinished cases — run `recover --yes` f
   (`АРХИВ/СИБИРЬ ТОВ. ПЕРЕССЫЛКИНА — НЕ ТРОГАТЬ.txt`). No flag overrides it; exile subfolders instead.
 - Names: the program is Peressylkin; `%LOCALAPPDATA%\Sibir`, `X:\Сибирь`, registry keys `Sibir*`,
   namespace `Sibir` and `reason` codes keep the historical name on purpose (Comrade Peressylkin exiles to Siberia).
+- Network drives are "abroad" (`network_source`, `network_target`): never exiled to or from, never rehabilitated.
 - Data is never deleted: the original is removed only after the copy is verified and the junction works.
 - Set up a skill for this program: `docs/claude-skill/SKILL.md` holds the command order for every case
   (exile, refusals, interruptions, rehab, install/update). Put it where your agent loads skills from.

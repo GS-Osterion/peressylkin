@@ -26,6 +26,7 @@ The tool never deletes data: the original is removed only after the copy is veri
 - `peressylkin_property` — the tool's case archive (`%LOCALAPPDATA%\Sibir`), a folder containing it (e.g. whole `AppData`), a Siberia root, or a folder holding exiled folders. Cannot be overridden: offer specific subfolders instead (e.g. `AppData\Local\<app>`).
 - `protected` (Windows, Program Files, the profile itself…), `store_app`, `in_siberia`, `already_exiled`, `case_open` — not movable as given; explain `message`.
 - `no_space`, `same_drive`, `network_target`, `regime_city`, `target_is_source` — choose another `--to`.
+- `network_source` / `network_target` — network drives are "abroad": the program never works with them, in either direction. Use local drives only.
 - `nested` — don't pass a folder together with its own subfolder.
 
 ## When a move stops
@@ -33,6 +34,7 @@ The tool never deletes data: the original is removed only after the copy is veri
 - Exit 3 (`locked`) — a program holds files (`processes` lists them). Ask the user to close it, then retry. Never kill processes yourself.
 - Exit 4 (`copy_failed` / `verify_failed`) — rolled back, original untouched. Report and stop.
 - Exit 5 (`needs_admin`) — hand the user the command from `message` to run elevated. Never elevate yourself.
+  A classified case also answers exit 5 with no target: do not ask for its details; only the human, as administrator, can act on it.
 - Exit 6 (`unfinished`) — an earlier operation was interrupted: `recover --yes --json` first, then repeat.
 
 ## Bring a folder back (rehab)

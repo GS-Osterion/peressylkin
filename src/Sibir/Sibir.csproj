@@ -6,7 +6,7 @@
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>Peressylkin</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>Перессылкин — Ссылка в Сибирь</Product>
     <Description>Перенос папок на другой диск с сохранением путей (junction)</Description>
     <RootNamespace>Sibir</RootNamespace>
