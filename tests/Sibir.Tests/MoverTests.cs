@@ -37,6 +37,18 @@ namespace Sibir.Tests
 
         private string Status() => _archive.Current().Last().Status;
 
+        [Fact] public void Unstamp_RemovesIniAndSystemAttr()
+        {
+            Assert.True(Exile(M()).Ok);
+            var ini = Path.Combine(_tgt, Stamp.FileName);
+            Assert.True(File.Exists(ini), "stamped first");
+            Stamp.Unstamp(_src, _tgt);
+            Assert.False(File.Exists(ini), "ini gone");
+            Assert.True((File.GetAttributes(_src) & FileAttributes.System) == 0, "System attr gone");
+            Assert.True(Junction.IsReparsePoint(_src) && LongPath.Same(Junction.GetTarget(_src), _tgt), "link intact");
+            Stamp.Unstamp(_src, _tgt);   // already off: no-op
+        }
+
         [Fact] public void Mover_Exile_Roundtrip()
         {
             var before = Manifest.Build(_src);

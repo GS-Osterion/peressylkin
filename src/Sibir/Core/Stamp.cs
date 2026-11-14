@@ -21,6 +21,16 @@ namespace Sibir.Core
             return true;
         }
 
+        /// <summary>Take our stamp off an exiled folder: desktop.ini in the target, System on the link, refresh Explorer.</summary>
+        public static void Unstamp(string link, string targetDir)
+        {
+            Remove(targetDir);
+            var l = LongPath.Ex(link);
+            var a = File.GetAttributes(l);
+            if ((a & FileAttributes.System) != 0) File.SetAttributes(l, a & ~FileAttributes.System);
+            NativeMethods.SHChangeNotify(NativeMethods.SHCNE_UPDATEDIR, NativeMethods.SHCNF_PATHW, LongPath.Normalize(link), System.IntPtr.Zero);
+        }
+
         public static void Remove(string dir)
         {
             var ini = LongPath.Ex(Path.Combine(dir, FileName));
