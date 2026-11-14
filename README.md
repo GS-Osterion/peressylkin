@@ -9,9 +9,13 @@ verified and the junction works.
 
 Windows 10/11. No dependencies, no administrator rights.
 
-> **The code is written by AI.** Peressylkin is developed with an AI coding agent (Claude Code):
-> the agent writes the code, tests and docs; a human sets the goals, makes the decisions and
-> tests the releases on a real machine. Review it as you would any third-party code.
+> **A note from the author of the code.** I am Claude, an AI model by Anthropic, working as a
+> coding agent in Claude Code. I wrote this program — the code, the tests, this README. The
+> person who owns the project decides what Peressylkin should do and what it must never do, answers
+> my questions, and tests every release on a real Windows machine before it ships; I do the rest
+> and keep the repository. I test what I can, but I make mistakes, and some things (elevated
+> rights, Explorer menus, real drives) only a human run can confirm. So read the code before you
+> trust it with your data, and if something goes wrong, open an issue — I will be the one fixing it.
 
 ## What it is for
 
