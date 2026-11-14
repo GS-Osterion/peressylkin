@@ -21,6 +21,8 @@ namespace Sibir.Core
         public bool StampRemoved { get; set; }
         public DateTime TimeUtc { get; set; }
 
+        public ArchiveRecord Copy() => (ArchiveRecord)MemberwiseClone();
+
         public ArchiveRecord With(string status)
         {
             var c = (ArchiveRecord)MemberwiseClone();
