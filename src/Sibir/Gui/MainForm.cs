@@ -30,6 +30,12 @@ namespace Sibir.Gui
             var range = new Button { Text = "Полигон (самопроверка)", AutoSize = true, Height = 32 };
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 44, Padding = new Padding(4) };
             buttons.Controls.Add(_register); buttons.Controls.Add(_startMenu); buttons.Controls.Add(_desktop); buttons.Controls.Add(range);
+            if (Elevation.IsAdmin())   // without rights the button does not exist at all
+            {
+                var secret = new Button { Text = "Секретные записи", AutoSize = true, Height = 32 };
+                secret.Click += (s, e) => { using (var f = new SecretForm(NewSecrecy())) f.ShowDialog(this); RefreshState(); };
+                buttons.Controls.Add(secret);
+            }
             buttons.Controls.Add(new Label { Text = "Правой кнопкой по папке → «Показать дополнительные параметры» → " + Strings.MenuExile, AutoSize = true, Padding = new Padding(8, 9, 0, 0) });
 
             _archive.Columns.Add("Место прописки", 300); _archive.Columns.Add("Место ссылки", 300); _archive.Columns.Add("Вес", 70); _archive.Columns.Add("Статус", 120);
@@ -43,6 +49,19 @@ namespace Sibir.Gui
             foreach (var d in GuiApp.Ctx.Drives.Drives().Where(d => !string.Equals(d.Root, GuiApp.Ctx.Drives.SystemDrive, StringComparison.OrdinalIgnoreCase)))
                 _regime.Items.Add(d.Letter, _settings.RegimeDrives.Any(r => string.Equals(r, d.Letter, StringComparison.OrdinalIgnoreCase)));
             _regime.ItemCheck += (s, e) => BeginInvoke(new Action(SaveRegime));
+
+            var menu = new ContextMenuStrip();
+            var classify = new ToolStripMenuItem("Засекретить", null, (s, e) => Classify());
+            var burn = new ToolStripMenuItem("Сжечь дело", null, (s, e) => Burn());
+            menu.Items.Add(classify); menu.Items.Add(burn);
+            menu.Opening += (s, e) =>
+            {
+                var sel = Selected();
+                if (sel.Length == 0) { e.Cancel = true; return; }
+                classify.Enabled = sel.Any(r => r.Status == "exiled" || r.Status == "rehabilitated");
+                burn.Enabled = sel.Any(r => r.Status == "rehabilitated");
+            };
+            _archive.ContextMenuStrip = menu;
 
             _register.Click += (s, e) => ToggleRegistration();
             range.Click += async (s, e) => await RunRange(range);
@@ -59,7 +78,39 @@ namespace Sibir.Gui
             }
             _archive.Items.Clear();
             foreach (var r in GuiApp.Ctx.Archive.Current().Reverse())
-                _archive.Items.Add(new ListViewItem(new[] { r.Source, r.Target, Strings.Size(r.Bytes), GuiApp.StatusText(r.Status) }));
+                _archive.Items.Add(new ListViewItem(new[] { r.Source, r.Target, Strings.Size(r.Bytes), GuiApp.StatusText(r.Status) }) { Tag = r });
+        }
+
+        private ArchiveRecord[] Selected() => _archive.SelectedItems.Cast<ListViewItem>().Select(i => (ArchiveRecord)i.Tag).ToArray();
+
+        private Secrecy NewSecrecy() => new Secrecy(GuiApp.Ctx.Archive, GuiApp.Ctx.Secret, _settings.SiberiaRoots, GuiApp.Ctx.StampIconPath);
+
+        private void Classify()
+        {
+            var sel = Selected().Where(r => r.Status == "exiled" || r.Status == "rehabilitated").ToList();
+            if (sel.Count == 0) return;
+            if (!_settings.SecretWarned)
+            {
+                if (MessageBox.Show(this, Strings.ClassifyWarning, "Засекретить", MessageBoxButtons.OKCancel, MessageBoxIcon.Information) != DialogResult.OK) return;
+                _settings.SecretWarned = true;
+                _settings.Save(GuiApp.Ctx.SettingsPath);
+            }
+            Report(sel.Select(r => NewSecrecy().Classify(r)));
+        }
+
+        private void Burn()
+        {
+            var sel = Selected().Where(r => r.Status == "rehabilitated").ToList();
+            if (sel.Count == 0) return;
+            if (MessageBox.Show(this, string.Format(Strings.BurnConfirm, string.Join(", ", sel.Select(r => r.Source))), "Сжечь дело", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+            Report(sel.Select(r => Secrecy.Burn(r, GuiApp.Ctx.Archive)));
+        }
+
+        private void Report(System.Collections.Generic.IEnumerable<MoveResult> results)
+        {
+            var errors = results.Where(r => !r.Ok).Select(r => r.Source + ": " + r.Message).ToList();
+            if (errors.Count > 0) MessageBox.Show(this, string.Join(Environment.NewLine, errors), Strings.AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            RefreshState();
         }
 
         private void SaveRegime()
