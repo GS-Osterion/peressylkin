@@ -26,7 +26,11 @@ namespace Sibir.Tests
             var info = new DirectoryInfo(dir);
             if (!info.Exists) return;
             if ((info.Attributes & FileAttributes.ReparsePoint) != 0) { info.Attributes = FileAttributes.Directory; Directory.Delete(dir, false); return; }
-            foreach (var f in info.GetFiles("*", SearchOption.TopDirectoryOnly)) { f.Attributes = FileAttributes.Normal; f.Delete(); }
+            foreach (var f in info.GetFiles("*", SearchOption.TopDirectoryOnly))
+            {
+                try { f.Attributes = FileAttributes.Normal; } catch (UnauthorizedAccessException) { }   // secret archive: delete-only
+                f.Delete();
+            }
             foreach (var d in info.GetDirectories()) DeleteTree(d.FullName);
             info.Attributes = FileAttributes.Directory;
             Directory.Delete(dir, false);

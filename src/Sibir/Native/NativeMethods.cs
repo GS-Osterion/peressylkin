@@ -17,6 +17,30 @@ namespace Sibir.Native
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeFileHandle CreateFile(string name, uint access, uint share, IntPtr sa, uint disposition, uint flags, IntPtr template);
 
+        public const uint FILE_READ_DATA = 0x1, FILE_APPEND_DATA = 0x4, READ_CONTROL = 0x20000, SYNCHRONIZE = 0x100000;
+        public const uint CREATE_ALWAYS = 2, OPEN_ALWAYS = 4, FILE_ATTRIBUTE_HIDDEN = 0x2, FILE_ATTRIBUTE_NORMAL = 0x80;
+        public const uint INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF, FILE_NAMED_STREAMS = 0x40000;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SECURITY_ATTRIBUTES { public int nLength; public IntPtr lpSecurityDescriptor; public int bInheritHandle; }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool WriteFile(SafeFileHandle h, byte[] buf, int count, out int written, IntPtr overlapped);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern uint GetFileAttributes(string name);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern bool DeleteFile(string name);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern bool GetVolumeInformation(string root, StringBuilder name, int nameLen, out uint serial, out uint maxComponent, out uint flags, StringBuilder fs, int fsLen);
+
+        public const int SHCNE_UPDATEDIR = 0x1000, SHCNE_UPDATEITEM = 0x2000; public const uint SHCNF_PATHW = 0x5;
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        public static extern void SHChangeNotify(int eventId, uint flags, string item1, IntPtr item2);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool DeviceIoControl(SafeFileHandle h, uint code, byte[] inBuf, int inSize, byte[] outBuf, int outSize, out int returned, IntPtr overlapped);
 

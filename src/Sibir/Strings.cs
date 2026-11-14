@@ -35,7 +35,13 @@ namespace Sibir
         public const string Recover = "Доследование";
         public const string NoDestination = "Сибирь не найдена. Этап отменён";
         public const string NotExiled = "Не числится в архиве";
-        public const string Abroad = "За границу не ссылают — высылают. А высланных не реабилитируют";
+        public const string Classified = "Дело засекречено. Реабилитация — по санкции прокурора";
+        public const string ClassifyWarning = "Засекреченные дела выдаются к просмотру только по санкции прокурора";
+        public const string SafeBroken = "Сейф вскрыт: секретный архив кто-то подменил. Засекречивание отменено";
+        public const string NoStreams = "Этот диск не умеет хранить секреты (не NTFS): засекретить нельзя";
+        public const string BurnConfirm = "Сжечь дело {0}? Восстановить его будет нельзя";
+        public const string WrongAccount = "Права выданы другой учётной записи: её архив — не ваш. Секретные записи недоступны";
+        public const string Abroad ="За границу не ссылают — высылают. А высланных не реабилитируют";
         public const string Nested = "Уже едет в составе старшего по делу";
         public const string TargetExists = "Место занято: по этому адресу уже кто-то живёт";
         public const string CopyFailed = "Этап сорван";
