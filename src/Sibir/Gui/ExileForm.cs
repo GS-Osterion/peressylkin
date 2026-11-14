@@ -136,7 +136,7 @@ namespace Sibir.Gui
             }
             if (sel.Count == 0) { Recheck(); return; }
             var saved = Settings.Load(GuiApp.Ctx.SettingsPath);
-            saved.LastRoot = root; saved.ProtectCapital = _capital.Checked; saved.Save(GuiApp.Ctx.SettingsPath);
+            saved.RememberRoot(root);saved.ProtectCapital = _capital.Checked; saved.Save(GuiApp.Ctx.SettingsPath);
             var mover = GuiApp.NewMover(_strict.Checked, _stamp.Checked);
             Plaque.EnsureArchive(GuiApp.Ctx.ArchiveDir);
             Plaque.EnsureSiberia(root);

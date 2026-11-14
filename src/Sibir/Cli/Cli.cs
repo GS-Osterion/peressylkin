@@ -147,7 +147,7 @@ namespace Sibir.Cli
                 }
                 var r = mover.Exile(c.Path, c.Target, Progress(w, err, c.Path), CancellationToken.None);
                 code = Math.Max(code, Report(w, r));
-                if (r.Ok) { settings.LastRoot = LongPath.Normalize(root); Settings.Load(ctx.SettingsPath).Also(s => { s.LastRoot = settings.LastRoot; s.Save(ctx.SettingsPath); }); }
+                if (r.Ok) { settings.LastRoot = LongPath.Normalize(root); Settings.Load(ctx.SettingsPath).Also(s => { s.RememberRoot(root); s.Save(ctx.SettingsPath); }); }
             }
             return code;
         }

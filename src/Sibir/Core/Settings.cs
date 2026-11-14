@@ -11,6 +11,15 @@ namespace Sibir.Core
         public string LastRoot { get; set; }
         public bool ProtectCapital { get; set; } = true;
         public List<string> RegimeDrives { get; set; } = new List<string>();   // "G:"
+        /// <summary>Every Siberia root ever used: where a classified root mark may sit.</summary>
+        public List<string> SiberiaRoots { get; set; } = new List<string>();
+        public bool SecretWarned { get; set; }
+
+        public void RememberRoot(string root)
+        {
+            LastRoot = Sibir.Native.LongPath.Normalize(root);
+            if (!SiberiaRoots.Exists(r => Sibir.Native.LongPath.Same(r, LastRoot))) SiberiaRoots.Add(LastRoot);
+        }
 
         public static string DefaultPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Sibir", "settings.json");
 
@@ -21,6 +30,7 @@ namespace Sibir.Core
                 var s = new JavaScriptSerializer().Deserialize<Settings>(File.ReadAllText(path, Encoding.UTF8));
                 if (s == null) return new Settings();
                 s.RegimeDrives = s.RegimeDrives ?? new List<string>();
+                s.SiberiaRoots = s.SiberiaRoots ?? new List<string>();
                 return s;
             }
             catch { return new Settings(); }

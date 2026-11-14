@@ -64,6 +64,13 @@ namespace Sibir.Core
             return false;
         }
 
+        private static bool InSecretPlace(string path)
+        {
+            for (var p = LongPath.Normalize(path); !string.IsNullOrEmpty(p); p = System.IO.Path.GetDirectoryName(p))
+                if (SecretMark.Has(p)) return true;
+            return false;
+        }
+
         public static List<CheckResult> Run(IReadOnlyList<string> sources, string root, CheckOptions opt, IDriveEnv env, Archive archive, Func<string, LauncherHit> detect)
         {
             var settings = opt.Settings ?? new Settings();
@@ -89,7 +96,9 @@ namespace Sibir.Core
                 if (UnderReparsePoint(src)) { Refuse("already_exiled", Strings.AlreadyExiled); continue; }
                 if (exiled.Any(e => LongPath.Same(e.Source, src))) { Refuse("case_open", Strings.CaseOpen); continue; }
                 if (exiled.Any(e => LongPath.SameOrUnder(src, e.Target)) || LongPath.SameOrUnder(src, rootN)) { Refuse("in_siberia", Strings.InSiberia); continue; }
+                if (InSecretPlace(src)) { Refuse("in_siberia", Strings.InSiberia); continue; }                   // classified case: invisible to this process's archive
                 if (exiled.Any(e => LongPath.SameOrUnder(e.Target, src))) { Refuse("peressylkin_property", Strings.Property); continue; }   // a Siberia (even 1.0.0, no plaque) holding exiled folders
+                if (settings.SiberiaRoots.Concat(new[] { rootN }).Any(sr => LongPath.SameOrUnder(sr, src) && SecretMark.Has(sr))) { Refuse("peressylkin_property", Strings.Property); continue; }   // a Siberia holding classified folders
                 if (LongPath.SameOrUnder(rootN, src)) { Refuse("target_is_source", Strings.TargetIsSource); continue; }
                 if (env.IsNetworkPath(rootN)) { Refuse("network_target", Strings.Abroad); continue; }
                 if (string.Equals(env.VolumeIdOf(src), rootVol, StringComparison.OrdinalIgnoreCase)) { Refuse("same_drive", Strings.SameDrive); continue; }

@@ -152,6 +152,23 @@ namespace Sibir.Tests
 
         [Fact] public void NetworkTarget() => Is(One(Src(@"c\A"), root: _t.Sub(@"n\Сибирь")), Verdict.Refused, "network_target");
         [Fact] public void NetworkTarget_AbroadText() => Assert.Equal(Strings.Abroad, One(Src(@"c\A"), root: _t.Sub(@"n\Сибирь")).Message);
+        [Fact] public void SecretTarget_InSiberia()
+        {
+            var tgt = Src(@"t\Другая\C\Игра");      // not under _root: only the mark can refuse it
+            SecretMark.Set(tgt);
+            Is(One(tgt), Verdict.Refused, "in_siberia");
+            Is(One(Src(@"t\Другая\C\Игра\sub")), Verdict.Refused, "in_siberia");
+        }
+
+        [Fact] public void ContainsSecretRoot_Property()
+        {
+            var root = Src(@"d\X\Сибирь");
+            var o = new CheckOptions { Settings = new Settings { SiberiaRoots = { root } } };
+            Is(One(_t.Sub(@"d\X"), o: o), Verdict.Ok, "ok");
+            SecretMark.Set(root);
+            Is(One(_t.Sub(@"d\X"), o: o), Verdict.Refused, "peressylkin_property");
+        }
+
         [Fact] public void NetworkSource() => Is(One(Src(@"n\A")), Verdict.Refused, "network_source");
 
         [Fact] public void NoSpace()
